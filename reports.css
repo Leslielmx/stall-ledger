@@ -111,7 +111,15 @@
   .home-calendar-card .calendar-day b{font-size:11px}
   .tab{font-size:11px}
 }
-.bear-art{width:62px;height:62px}.bear-doodle{display:block;width:100%;height:100%;filter:drop-shadow(0 3px 3px #6c72551e)}
+.bear-art{width:62px;height:62px}
+.expense-bear-art{position:relative;width:40px;height:40px;flex:none;overflow:visible}
+.expense-bear-art .bear-ear{width:14px;height:14px;top:2px;border-width:1.5px}
+.expense-bear-art .bear-ear::after{inset:3px}
+.expense-bear-art .bear-ear.ear-left{left:4px}.expense-bear-art .bear-ear.ear-right{right:4px}
+.expense-bear-art .bear-face{left:3px;top:8px;width:34px;height:30px;border-width:1.5px;box-shadow:inset 0 -5px #c18b67}
+.expense-bear-art .bear-eye{top:11px;width:3px;height:4px}.expense-bear-art .bear-eye.eye-left{left:8px}.expense-bear-art .bear-eye.eye-right{right:8px}
+.expense-bear-art .bear-nose{top:17px;left:12px;width:7px;height:5px}
+.expense-bear-art .bear-cheek{top:17px;width:7px;height:4px}.expense-bear-art .bear-cheek.cheek-left{left:3px}.expense-bear-art .bear-cheek.cheek-right{right:3px}
 @media(max-width:600px){.show-home .bear-art{width:51px;height:51px}}
 .calendar-action-card h2{font-size:18px;margin:0 25px 8px 0}
 .calendar-action-summary{margin:0 0 15px;color:#758376;font-size:11px;line-height:1.5}
