@@ -143,4 +143,35 @@
 .home-calendar-card .calendar-day{height:66px}
 .home-calendar-card .calendar-day b{width:26px;height:26px;font-size:12px}
 @media(max-width:600px){.show-home .home-calendar-card .calendar-day{height:62px}.show-home .home-calendar-card .calendar-day b{width:25px;height:25px;font-size:11px}.show-home .home-calendar-card .calendar-amounts{min-height:19px}}
+:root{background:#fbfaff;color:#273336}
+body{background:#fbfaff}
+.app-shell{background:radial-gradient(circle at 100% 0%,#e9e5ffb8,transparent 27%),radial-gradient(circle at 0% 34%,#d9f7eea6,transparent 30%),linear-gradient(180deg,#fbfaff,#f6fffb)}
+.hero-card{background:radial-gradient(circle at 95% 5%,#ffe4c8d9,transparent 40%),linear-gradient(125deg,#cef3e8,#e4f2ff);border-color:#d7eee8;box-shadow:0 14px 28px #597a7220}
+.brand-mark{background:#d6f5eb;color:#328665}
+.date-chip{background:#fff7e9;border-color:#f1ddc8;color:#735e4c}
+.tab{background:#fffdf9d9;border-color:#e5e8ec;color:#74818a}
+.tab.active{background:#c8f0df;color:#267451;border-color:#b2e5d0}
+.income-quick{background:linear-gradient(145deg,#ffe1d8,#fff0d9);color:#754b4b}
+.purchase-quick{background:linear-gradient(145deg,#d5f3df,#e9f6d6);color:#3c654a}
+.stocktake-quick{background:linear-gradient(145deg,#d9e9ff,#ebe4ff);color:#4b5f91}
+.quick-icon{background:#ffffffc9}
+.calendar-card,.form-card,.list-card,.analysis-card,.report-metric,.channel-box{background:#fffefc;border-color:#e9edf0}
+.calendar-head button{background:#e0f5ed;color:#34775d}
+.calendar-period-switch,.period-switch{background:#e8f4f1}
+.calendar-period-switch button.active,.period-button.active{background:#fffefa;color:#287451}
+.calendar-day.selected b{background:#b8efd9;color:#1d6547;box-shadow:0 0 0 2px #62bd96}
+.calendar-day.today:not(.selected) b{background:#fff0c9;color:#815f24}
+.calendar-day.special-kind-school-break,.special-day-dialog[data-special-kind="school-break"]{--special-fill:#ffd7e8;--special-stroke:#ef91b6;--special-panel:#fff0f6}
+.calendar-day.special-kind-school-event,.special-day-dialog[data-special-kind="school-event"]{--special-fill:#f5d8ff;--special-stroke:#c18bda;--special-panel:#f9efff}
+.calendar-day.special-kind-holiday,.special-day-dialog[data-special-kind="holiday"]{--special-fill:#ffe8b8;--special-stroke:#d9ae5f;--special-panel:#fff6df}
+.calendar-day.special-kind-weather,.special-day-dialog[data-special-kind="weather"]{--special-fill:#cfeeff;--special-stroke:#73b4d4;--special-panel:#e8f7ff}
+.calendar-day.special-kind-market,.special-day-dialog[data-special-kind="market"]{--special-fill:#c9f1dc;--special-stroke:#69ba8d;--special-panel:#e9fbf1}
+.calendar-day.special-kind-other,.special-day-dialog[data-special-kind="other"]{--special-fill:#e2dcff;--special-stroke:#9d8ee0;--special-panel:#f1efff}
+.calendar-event{color:#33414a;font-weight:800}
+.calendar-legend .legend-income{color:#328963}.calendar-legend .legend-expense{color:#cf718b}.calendar-legend .legend-loss{color:#9c79c8}
+.primary-button{background:linear-gradient(110deg,#64bd94,#5baed0);box-shadow:0 4px 10px #5da99132}
+.expenses-page-heading{background:linear-gradient(110deg,#fff0f5,#f0f8ff);border-color:#e7e4ee}
+.expense-bear{background:#d9f5ee}
+#view-overview .text-button[data-tab-link],#view-inventory #adjustStock,#view-expenses .text-button{background:linear-gradient(180deg,#fffefa,#eaf8f3);border-color:#cadbd4;color:#3e6b59;box-shadow:0 2px 0 #d2e1da,0 4px 8px #527e6c1a}
+.special-day-dialog .special-day-card{background:linear-gradient(135deg,var(--special-panel,#fff0f6),#fffefc)}
 
