@@ -40,5 +40,37 @@
   .hero-stats button span{font-size:9px;white-space:normal}
   .hero-stats button strong{font-size:12px}
   footer{padding-bottom:8px}
+  .app-shell.show-home{padding-top:10px}
+  .show-home .topbar{margin-bottom:8px}
+  .show-home .brand-mark{width:31px;height:31px;border-radius:9px}
+  .show-home .brand-mark svg{width:20px;height:20px}
+  .show-home .brand h1{font-size:17px}
+  .show-home .brand .eyebrow{font-size:8px}
+  .show-home .date-chip{padding:6px 8px;font-size:10px}
+  .show-home .hero-card{padding:11px 13px;border-radius:18px}
+  .show-home .hero-card h2{font-size:26px;margin:2px 0 8px}
+  .show-home .muted-light{font-size:10px}
+  .show-home .bear-art{width:49px;height:49px;transform:scale(.66);transform-origin:top right;margin:0}
+  .show-home .hero-stats{padding-top:8px}
+  .show-home .hero-stats button span{font-size:8px}
+  .show-home .hero-stats button strong{font-size:11px}
+  .show-home #view-overview>.section-heading:first-child{margin:9px 0 6px}
+  .show-home #view-overview>.section-heading:first-child h2,.show-home .home-calendar-heading h2{font-size:16px}
+  .show-home .quick-card,.show-home .stocktake-quick{min-height:66px;padding:5px 3px;gap:2px}
+  .show-home .quick-icon{width:21px;height:21px;font-size:14px}
+  .show-home .quick-card b{font-size:10px}
+  .show-home .quick-card small{font-size:8px}
+  .show-home .home-calendar-heading{margin:9px 0 5px}
+  .show-home .calendar-period-switch{margin:3px 0 5px}
+  .show-home .calendar-period-switch button{padding:5px}
+  .show-home .home-calendar-card{padding:7px 9px 6px}
+  .show-home .home-calendar-card .calendar-head{margin-bottom:2px}
+  .show-home .home-calendar-card .calendar-head button{width:25px;height:25px;font-size:18px}
+  .show-home .home-calendar-card .calendar-day{height:38px}
+  .show-home .home-calendar-card .calendar-day b{width:18px;height:18px;font-size:9px}
+  .show-home .home-calendar-card .calendar-amounts{min-height:16px}
+  .show-home .home-calendar-card .calendar-amounts small{font-size:7px;line-height:8px}
+  .show-home .calendar-weekdays span{font-size:8px;padding:2px 0 3px}
+  .show-home .calendar-legend{font-size:8px;margin-top:4px}
 }
 
