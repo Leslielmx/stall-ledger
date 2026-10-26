@@ -95,7 +95,7 @@
         <div id="purchaseList" class="list-card"></div>
         <div class="section-heading compact"><div><p class="eyebrow">OTHER EXPENSES</p><h2>其他支出</h2></div></div>
         <form id="expenseForm" class="form-card">
-          <div class="form-row"><label class="field">日期<input name="date" type="date" required /></label><label class="field">分类<select name="category"><option>交通费</option><option>摊位费</option><option>运费</option><option>包装耗材</option><option>燃气电费</option><option>设备用品</option><option>其他支出</option></select></label></div>
+          <div class="form-row"><label class="field">日期<input name="date" type="date" required /></label><div class="field"><span>分类</span><div class="product-select-control"><select name="category" required></select><button id="addExpenseCategory" class="outline-button" type="button">＋ 新增</button></div></div></div>
           <div class="form-row"><label class="field">支出项目<input name="item" maxlength="60" placeholder="例如：往返车费" required /></label><label class="field">金额（元）<div class="money-input"><i>¥</i><input name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required /></div></label></div>
           <label class="field">备注（可选）<input name="note" maxlength="100" /></label>
           <p class="form-hint">采购相关运费若已填在上方「其他采购支出」，这里不要重复记录。</p>
@@ -225,6 +225,14 @@
       <label class="field">补货提醒值<div class="threshold-control"><input name="threshold" type="number" min="0" step="0.001" inputmode="decimal" placeholder="可不填" /><span id="newProductThresholdUnit">单位</span></div></label>
       <p class="form-hint">当前库存低于或等于这个固定数量时提醒补货。</p>
       <button class="primary-button" type="submit">保存到原料列表</button>
+    </form>
+  </dialog>
+  <dialog id="expenseCategoryDialog">
+    <form id="expenseCategoryForm" class="form-card dialog-card">
+      <button class="close-expense-category" type="button" aria-label="取消并关闭">×</button>
+      <p class="eyebrow">EXPENSE CATEGORY</p><h2>新增支出分类</h2>
+      <label class="field">分类名称<input name="name" maxlength="24" placeholder="例如：清洁用品" required /></label>
+      <button class="primary-button" type="submit">保存分类</button>
     </form>
   </dialog>
   <div id="toast" role="status" class="toast"></div>
