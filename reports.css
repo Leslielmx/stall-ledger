@@ -126,4 +126,7 @@
 .expenses-page-heading .eyebrow{font-size:9px;letter-spacing:.02em;color:#8b9688;margin-bottom:2px}
 .expenses-page-heading h2{font-size:18px!important;line-height:1.2;color:#314635}
 .expense-bear{width:40px;height:40px;flex:none;padding:2px;background:#f3f5ed;border-radius:12px}
+.text-button,#view-overview .text-button[data-tab-link],#view-inventory #adjustStock,#view-expenses .text-button{display:inline-flex;align-items:center;justify-content:center;min-height:32px;padding:6px 12px;border:1px solid #cfd3d0;border-radius:10px;background:linear-gradient(180deg,#ffffff,#f2f4f1);color:#4b5c51;font-size:11px;font-weight:750;box-shadow:0 2px 0 #d9ddd8,0 4px 8px #374d3514;cursor:pointer}
+.text-button:active,#view-overview .text-button[data-tab-link]:active{transform:translateY(1px);box-shadow:0 1px 0 #d9ddd8}
+#view-expenses .outline-button{border-color:#cfd3d0;background:linear-gradient(180deg,#fff,#f2f4f1);color:#4b5c51;box-shadow:0 2px 0 #d9ddd8;font-size:11px}
 
