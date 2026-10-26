@@ -97,7 +97,7 @@ function updatePurchaseProduct(){
   updatePurchaseConversionHint();
 }
 $('#purchaseForm [name=productId]').addEventListener('change',updatePurchaseProduct);
-function updatePurchaseConversionHint(){const form=$('#purchaseForm'),p=db.inventory[form.elements.productId.value],unit=form.elements.unit.value,qty=form.elements.qty.value,target=$('#purchaseConversionHint');if(!p){target.textContent='选择原料后，可按适用单位记录采购。';return;}const converted=qty===''?null:convertQty(qty,unit,p.unit);target.textContent=converted==null?`库存统一按 ${p.unit} 记录。${unitGroup(p.unit)==='mass'?'1 kg = 1000 g。':''}`:`本次 ${qty} ${unit} = 入库 ${converted} ${p.unit}；补货提醒值也按 ${p.unit} 填写。`;}
+function updatePurchaseConversionHint(){const form=$('#purchaseForm'),p=db.inventory[form.elements.productId.value],unit=form.elements.unit.value,qty=form.elements.qty.value,target=$('#purchaseConversionHint');if(!p){target.textContent='选择原料后，会显示适用于该原料的采购单位。新增或编辑原料时可选择 kg、g、个、份、盒、袋、包、瓶、杯、串、件、箱、L、mL、桶。';return;}const converted=qty===''?null:convertQty(qty,unit,p.unit),choices=unitChoices(p.unit).map(([value])=>value).join(' / ');target.textContent=converted==null?`库存统一按 ${p.unit} 记录；本次采购可选单位：${choices}。${unitGroup(p.unit)==='mass'?'1 kg = 1000 g。':''}`:`本次 ${qty} ${unit} = 入库 ${converted} ${p.unit}；补货提醒值也按 ${p.unit} 填写。`;}
 $('#purchaseForm [name=unit]').addEventListener('change',updatePurchaseConversionHint);
 $('#purchaseForm [name=qty]').addEventListener('input',updatePurchaseConversionHint);
 function renderInventory(){
