@@ -1,12 +1,19 @@
 const DB_KEY = 'stall-ledger-v1';
 const blankDB = () => ({ incomes: {}, purchases: [], expenses: [], adjustments: [], losses: [], inventory: {}, specialDays: {} });
-let db = readDB();
+let db;
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
 const today = () => new Date().toLocaleDateString('en-CA');
 const money = n => '¥' + (Number(n) || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const num = v => Number(v) || 0;
 const safe = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const unitFactors={kg:1000,g:1,'公斤':1000,'斤':500,'两':50,'克':1,L:1000,mL:1,'升':1000,'毫升':1};
+const unitGroup=unit=>['kg','g','公斤','斤','两','克'].includes(unit)?'mass':['L','mL','升','毫升'].includes(unit)?'volume':unit;
+const roundQty=value=>Math.round((value+Number.EPSILON)*1000000)/1000000;
+function convertQty(qty,from,to){if(from===to)return num(qty);if(unitGroup(from)!==unitGroup(to)||!unitFactors[from]||!unitFactors[to])return null;return roundQty(num(qty)*unitFactors[from]/unitFactors[to]);}
+function unitChoices(unit){return unitGroup(unit)==='mass'?[['kg','kg（公斤，2 斤）'],['g','g（克）']]:unitGroup(unit)==='volume'?[['L','L（升）'],['mL','mL（毫升）']]:[[unit,unit]];}
+function unitOptions(unit){return unitChoices(unit).map(([value,label])=>`<option value="${safe(value)}">${safe(label)}</option>`).join('');}
+db = readDB();
 let activePeriod='month', selectedDate=today(), dashboardDate=today();
 let reportChartStyle='bar', reportChartMetric='income';
 let calendarPeriod='month', calendarDate=today(), markedDate=today();
@@ -19,12 +26,37 @@ function normalizeDB(raw){
     if(amount>0&&!data.expenses.some(e=>e.recordId===`legacy-${date}`))data.expenses.push({recordId:`legacy-${date}`,date,category:'其他支出',item:'旧版每日支出',amount,note:'从旧版收入记录迁移',createdAt:`${date}T12:00:00`});
     delete income.otherExpense;
   }
+  if(data.unitSchema!==2){
+    for(const product of Object.values(data.inventory||{})){
+      const oldUnit=product.unit,newUnit=unitGroup(oldUnit)==='mass'?'kg':unitGroup(oldUnit)==='volume'?'L':oldUnit;
+      if(oldUnit===newUnit)continue;
+      const ratio=convertQty(1,oldUnit,newUnit);if(ratio==null)continue;
+      product.qty=roundQty(num(product.qty)*ratio);
+      if(product.threshold!=null)product.threshold=roundQty(num(product.threshold)*ratio);
+      product.unit=newUnit;
+      for(const purchase of data.purchases.filter(p=>p.id===product.id)){
+        const purchaseUnit=purchase.unit||oldUnit,converted=convertQty(purchase.qty,purchaseUnit,newUnit);
+        if(converted==null)continue;
+        purchase.qty=converted;purchase.unitCost=ratioForPrice(purchase.unitCost,purchaseUnit,newUnit);
+        purchase.unit=newUnit;
+        if(purchase.threshold!=null)purchase.threshold=roundQty(num(purchase.threshold)*ratio);
+      }
+      for(const adjustment of data.adjustments.filter(a=>a.id===product.id)){
+        adjustment.qty=roundQty(num(adjustment.qty)*ratio);
+        if(adjustment.actual!=null)adjustment.actual=roundQty(num(adjustment.actual)*ratio);
+        if(adjustment.inputUnit){const input=convertQty(adjustment.inputQty,adjustment.inputUnit,newUnit);adjustment.inputQty=input??adjustment.inputQty;adjustment.inputUnit=newUnit;}
+      }
+      for(const loss of data.losses.filter(a=>a.id===product.id))loss.qty=roundQty(num(loss.qty)*ratio);
+    }
+    data.unitSchema=2;
+  }
   return data;
 }
-function readDB(){ try { const raw=JSON.parse(localStorage.getItem(DB_KEY)||'{}');const migrated=Object.values(raw.incomes||{}).some(i=>Object.hasOwn(i,'otherExpense'));const data=normalizeDB(raw);if(migrated)localStorage.setItem(DB_KEY,JSON.stringify(data));return data; } catch { return blankDB(); } }
+function ratioForPrice(price,from,to){const factor=convertQty(1,from,to);return factor?roundQty(num(price)/factor):num(price);}
+function readDB(){ try { const raw=JSON.parse(localStorage.getItem(DB_KEY)||'{}');const migrated=Object.values(raw.incomes||{}).some(i=>Object.hasOwn(i,'otherExpense'))||raw.unitSchema!==2;const data=normalizeDB(raw);if(migrated)localStorage.setItem(DB_KEY,JSON.stringify(data));return data; } catch { return blankDB(); } }
 function seedDefaultIngredients(){
   let changed=false;
-  for(const [name,unit] of [['鸡蛋','个'],['面粉','斤'],['猪肉','斤']]){
+  for(const [name,unit] of [['鸡蛋','个'],['面粉','kg'],['猪肉','kg']]){
     if(Object.values(db.inventory).some(p=>p.name===name))continue;
     const id=crypto.randomUUID();db.inventory[id]={id,name,unit,qty:0,threshold:null};changed=true;
   }
@@ -52,14 +84,21 @@ function renderProductSelect(){
 }
 function updatePurchaseProduct(){
   const form=$('#purchaseForm'),p=db.inventory[form.elements.productId.value];
-  form.elements.unit.value=p?.unit||'';
+  const select=form.elements.unit,previousProduct=select.dataset.productId,previousUnit=select.value;
+  select.innerHTML=p?unitOptions(p.unit):'<option value="">先选原料</option>';
+  if(p){select.value=previousProduct===p.id&&unitChoices(p.unit).some(([unit])=>unit===previousUnit)?previousUnit:p.unit;select.dataset.productId=p.id;}
+  else delete select.dataset.productId;
   $('#purchaseThresholdUnit').textContent=p?.unit||'单位';
   if(p&&!editingPurchaseRecordId)form.elements.threshold.value=p.threshold??'';
+  updatePurchaseConversionHint();
 }
 $('#purchaseForm [name=productId]').addEventListener('change',updatePurchaseProduct);
+function updatePurchaseConversionHint(){const form=$('#purchaseForm'),p=db.inventory[form.elements.productId.value],unit=form.elements.unit.value,qty=form.elements.qty.value,target=$('#purchaseConversionHint');if(!p){target.textContent='选择原料后，可按适用单位记录采购。';return;}const converted=qty===''?null:convertQty(qty,unit,p.unit);target.textContent=converted==null?`库存统一按 ${p.unit} 记录。kg = 公斤 = 2 斤，g = 克。`:`本次 ${qty} ${unit} = 入库 ${converted} ${p.unit}；补货提醒值也按 ${p.unit} 填写。`;}
+$('#purchaseForm [name=unit]').addEventListener('change',updatePurchaseConversionHint);
+$('#purchaseForm [name=qty]').addEventListener('input',updatePurchaseConversionHint);
 function renderInventory(){
   const rows=Object.values(db.inventory).sort((a,b)=>a.name.localeCompare(b.name,'zh-CN'));
-  $('#inventoryList').innerHTML=rows.length?rows.map(p=>`<div class="stock-row inventory-row"><div class="activity-main"><span class="row-title">${safe(p.name)}</span><span class="row-sub">补货提醒值：${p.threshold==null?'未设置':`${p.threshold} ${safe(p.unit)}`}</span></div><div class="inventory-remaining"><small>当前剩余</small><strong>${p.qty} ${safe(p.unit)}</strong>${p.threshold!=null&&p.qty<=p.threshold?'<em>需补货</em>':''}</div><button class="edit-record" data-product-id="${safe(p.id)}">编辑</button></div>`).join(''):'<div class="empty-state">还没有库存记录，记一笔采购后会自动入库</div>';
+  $('#inventoryList').innerHTML=rows.length?rows.map(p=>`<div class="stock-row inventory-row"><div class="activity-main"><span class="row-title">${safe(p.name)}</span><span class="row-sub">库存单位：${safe(p.unit)} · 补货提醒：${p.threshold==null?'未设置':`${p.threshold} ${safe(p.unit)}`}</span></div><div class="inventory-remaining"><small>当前剩余</small><strong>${p.qty} ${safe(p.unit)}</strong>${p.threshold!=null&&p.qty<=p.threshold?'<em>需补货</em>':''}</div><button class="edit-record" data-product-id="${safe(p.id)}">编辑</button></div>`).join(''):'<div class="empty-state">还没有库存记录，记一笔采购后会自动入库</div>';
   $$('#inventoryList [data-product-id]').forEach(b=>b.addEventListener('click',()=>openProductEdit(b.dataset.productId)));
 }
 function renderPurchaseList(){
@@ -76,7 +115,7 @@ function renderExpenseList(){
 }
 function renderStocktakeList(){
   const rows=[...db.adjustments].sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||'').localeCompare(a.createdAt||''));
-  $('#stocktakeList').innerHTML=rows.length?rows.map(a=>`<div class="activity-row record-row"><div class="activity-main"><span class="row-title">${safe(a.date)} · ${safe(a.name)}</span><span class="row-sub">实盘剩余 ${a.actual??'—'} ${safe(db.inventory[a.id]?.unit||'')} · 账面差异 ${a.qty>0?'+':''}${a.qty} ${safe(db.inventory[a.id]?.unit||'')}${a.note?' · '+safe(a.note):''}</span></div><div class="record-actions"><button class="edit-record" data-stocktake-edit="${safe(a.recordId||a.id)}">修改</button><button class="delete-record" data-stocktake-delete="${safe(a.recordId||a.id)}">删除</button></div></div>`).join(''):'<div class="empty-state">还没有盘点记录</div>';
+  $('#stocktakeList').innerHTML=rows.length?rows.map(a=>`<div class="activity-row record-row"><div class="activity-main"><span class="row-title">${safe(a.date)} · ${safe(a.name)}</span><span class="row-sub">实盘剩余 ${a.inputQty??a.actual??'—'} ${safe(a.inputUnit||db.inventory[a.id]?.unit||'')}${a.inputUnit&&a.inputUnit!==db.inventory[a.id]?.unit?`（入库 ${a.actual} ${safe(db.inventory[a.id]?.unit||'')}）`:''} · 账面差异 ${a.qty>0?'+':''}${a.qty} ${safe(db.inventory[a.id]?.unit||'')}${a.note?' · '+safe(a.note):''}</span></div><div class="record-actions"><button class="edit-record" data-stocktake-edit="${safe(a.recordId||a.id)}">修改</button><button class="delete-record" data-stocktake-delete="${safe(a.recordId||a.id)}">删除</button></div></div>`).join(''):'<div class="empty-state">还没有盘点记录</div>';
   $$('#stocktakeList [data-stocktake-edit]').forEach(b=>b.addEventListener('click',()=>editStocktake(b.dataset.stocktakeEdit)));
   $$('#stocktakeList [data-stocktake-delete]').forEach(b=>b.addEventListener('click',()=>deleteRecord('adjustment',b.dataset.stocktakeDelete)));
 }
@@ -130,8 +169,8 @@ function deleteRecord(type,id){
 }
 function recalculateInventory(productId){
   const product=db.inventory[productId];if(!product)return;
-  const events=[...db.purchases.filter(p=>p.id===productId).map(p=>({date:p.date,time:p.createdAt||`${p.date}T00:00:00`,type:0,qty:num(p.qty)})),...db.losses.filter(a=>a.id===productId).map(a=>({date:a.date,time:a.createdAt||`${a.date}T12:00:00`,type:1,qty:num(a.qty)})),...db.adjustments.filter(a=>a.id===productId).map(a=>({date:a.date,time:a.createdAt||`${a.date}T23:59:59`,type:2,source:a,actual:a.actual,qty:num(a.qty)}))].sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time)||a.type-b.type);
-  let qty=0;events.forEach(e=>{if(e.type===0)qty+=e.qty;else if(e.type===1)qty-=e.qty;else if(e.actual==null)qty+=e.qty;else{e.source.qty=Math.round((num(e.actual)-qty)*1000)/1000;qty=num(e.actual);}});product.qty=Math.round(qty*1000)/1000;
+  const events=[...db.purchases.filter(p=>p.id===productId).map(p=>({date:p.date,time:p.createdAt||`${p.date}T00:00:00`,type:0,qty:convertQty(p.qty,p.unit||product.unit,product.unit)??0})),...db.losses.filter(a=>a.id===productId).map(a=>({date:a.date,time:a.createdAt||`${a.date}T12:00:00`,type:1,qty:num(a.qty)})),...db.adjustments.filter(a=>a.id===productId).map(a=>({date:a.date,time:a.createdAt||`${a.date}T23:59:59`,type:2,source:a,actual:a.actual,qty:num(a.qty)}))].sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time)||a.type-b.type);
+  let qty=0;events.forEach(e=>{if(e.type===0)qty+=e.qty;else if(e.type===1)qty-=e.qty;else if(e.actual==null)qty+=e.qty;else{e.source.qty=roundQty(num(e.actual)-qty);qty=num(e.actual);}});product.qty=roundQty(qty);
 }
 function activateTab(name){ $('.app-shell').classList.toggle('show-home',name==='overview');$$('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name)); $$('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${name}`)); window.scrollTo({top:0,behavior:'smooth'}); }
 $$('.tab').forEach(t=>t.addEventListener('click',()=>activateTab(t.dataset.tab)));
@@ -161,13 +200,13 @@ $('#cancelIncomeEdit').addEventListener('click',()=>{$('#incomeForm [name=date]'
 
 function resetPurchaseEdit(){
   editingPurchaseRecordId=null;const form=$('#purchaseForm');form.reset();form.elements.productId.disabled=false;
-  $('#purchaseSubmit').textContent='保存采购并入库';$('#purchaseEditNotice').classList.add('hidden');$('#cancelPurchaseEdit').classList.add('hidden');setTodayInputs();
+  $('#purchaseSubmit').textContent='保存采购并入库';$('#purchaseEditNotice').classList.add('hidden');$('#cancelPurchaseEdit').classList.add('hidden');setTodayInputs();updatePurchaseProduct();
 }
 function editPurchase(id){
   const p=db.purchases.find(x=>(x.recordId||x.id)===id);if(!p)return;
   editingPurchaseRecordId=id;const form=$('#purchaseForm');
   for(const [name,value] of Object.entries({date:p.date,supplier:p.supplier,productId:p.id,unit:p.unit,qty:p.qty,unitCost:p.unitCost,threshold:db.inventory[p.id]?.threshold??'',extraCost:p.extraCost,note:p.note}))form.elements[name].value=value??'';
-  updatePurchaseProduct();
+  updatePurchaseProduct();form.elements.unit.value=p.unit;updatePurchaseConversionHint();
   form.elements.productId.disabled=true;$('#purchaseSubmit').textContent='保存采购修改';$('#purchaseEditNotice').classList.remove('hidden');$('#cancelPurchaseEdit').classList.remove('hidden');form.scrollIntoView({behavior:'smooth',block:'start'});
 }
 $('#cancelPurchaseEdit').addEventListener('click',resetPurchaseEdit);
@@ -175,10 +214,12 @@ $('#cancelPurchaseEdit').addEventListener('click',resetPurchaseEdit);
 $('#purchaseForm').addEventListener('submit',e=>{
   e.preventDefault();const form=e.currentTarget,f=new FormData(form),id=editingPurchaseRecordId?db.purchases.find(p=>(p.recordId||p.id)===editingPurchaseRecordId)?.id:f.get('productId'),product=db.inventory[id];
   if(!product){toast('请先选择或新增原料');return;}
-  const fields={date:f.get('date'),supplier:f.get('supplier').trim(),qty:num(f.get('qty')),unitCost:num(f.get('unitCost')),extraCost:num(f.get('extraCost')),note:f.get('note').trim()};
+  const unit=f.get('unit'),converted=convertQty(f.get('qty'),unit,product.unit);
+  if(converted==null){toast('采购单位与库存单位不匹配');return;}
+  const fields={date:f.get('date'),supplier:f.get('supplier').trim(),qty:num(f.get('qty')),unit,unitCost:num(f.get('unitCost')),extraCost:num(f.get('extraCost')),note:f.get('note').trim()};
   product.threshold=f.get('threshold')===''?null:num(f.get('threshold'));
   if(editingPurchaseRecordId){const p=db.purchases.find(x=>(x.recordId||x.id)===editingPurchaseRecordId);Object.assign(p,fields,{threshold:product.threshold});recalculateInventory(id);resetPurchaseEdit();saveDB();toast('采购记录已修改');return;}
-  db.purchases.push({recordId:crypto.randomUUID(),createdAt:new Date().toISOString(),id,name:product.name,unit:product.unit,threshold:product.threshold,...fields});recalculateInventory(id);resetPurchaseEdit();saveDB();toast('采购已保存，库存已增加');
+  db.purchases.push({recordId:crypto.randomUUID(),createdAt:new Date().toISOString(),id,name:product.name,threshold:product.threshold,...fields});recalculateInventory(id);resetPurchaseEdit();saveDB();toast('采购已保存，库存已增加');
 });
 
 function resetExpenseEdit(){
@@ -222,7 +263,11 @@ $('#productForm [name=unit]').addEventListener('change',e=>$('#productThresholdU
 $('#productForm').addEventListener('submit',e=>{
   e.preventDefault();const p=db.inventory[editingProductId];if(!p)return;const f=new FormData(e.currentTarget),name=f.get('name').trim(),unit=f.get('unit');
   if(Object.values(db.inventory).some(x=>x.id!==p.id&&x.name.toLowerCase()===name.toLowerCase())){toast('已有同名原料，请换一个名称');return;}
-  Object.assign(p,{name,unit,threshold:f.get('threshold')===''?null:num(f.get('threshold'))});db.purchases.filter(x=>x.id===p.id).forEach(x=>Object.assign(x,{name,unit}));db.adjustments.filter(x=>x.id===p.id).forEach(x=>x.name=name);db.losses.filter(x=>x.id===p.id).forEach(x=>x.name=name);
+  const oldUnit=p.unit,ratio=convertQty(1,oldUnit,unit),hasHistory=db.purchases.some(x=>x.id===p.id)||db.adjustments.some(x=>x.id===p.id)||db.losses.some(x=>x.id===p.id);
+  if(oldUnit!==unit&&ratio==null&&hasHistory){toast('已有记录的原料只能改成可换算的单位');return;}
+  if(oldUnit!==unit&&ratio!=null){p.qty=roundQty(num(p.qty)*ratio);db.adjustments.filter(x=>x.id===p.id).forEach(x=>{x.qty=roundQty(num(x.qty)*ratio);if(x.actual!=null)x.actual=roundQty(num(x.actual)*ratio);});db.losses.filter(x=>x.id===p.id).forEach(x=>x.qty=roundQty(num(x.qty)*ratio));}
+  Object.assign(p,{name,unit,threshold:f.get('threshold')===''?null:num(f.get('threshold'))});db.purchases.filter(x=>x.id===p.id).forEach(x=>x.name=name);db.adjustments.filter(x=>x.id===p.id).forEach(x=>x.name=name);db.losses.filter(x=>x.id===p.id).forEach(x=>x.name=name);
+  if(oldUnit!==unit)recalculateInventory(p.id);
   saveDB();$('#productDialog').close();editingProductId=null;toast('原料信息已修改');
 });
 $('#deleteProduct').addEventListener('click',()=>{
@@ -233,8 +278,13 @@ $('#deleteProduct').addEventListener('click',()=>{
 
 function populateStocktakeProducts(selectedId){
   const select=$('#adjustForm [name=product]');select.innerHTML=Object.values(db.inventory).map(p=>`<option value="${safe(p.id)}">${safe(p.name)}（现有 ${p.qty} ${safe(p.unit)}）</option>`).join('');
-  if(selectedId)select.value=selectedId;
+  if(selectedId)select.value=selectedId;updateStocktakeUnit();
 }
+function updateStocktakeUnit(preferredUnit){const form=$('#adjustForm'),p=db.inventory[form.elements.product.value],select=form.elements.unit;select.innerHTML=p?unitOptions(p.unit):'';if(p)select.value=unitChoices(p.unit).some(([unit])=>unit===preferredUnit)?preferredUnit:p.unit;updateStocktakeEquivalent();}
+function updateStocktakeEquivalent(){const form=$('#adjustForm'),p=db.inventory[form.elements.product.value],qty=form.elements.qty.value,unit=form.elements.unit.value,target=$('#stocktakeEquivalent');target.textContent=!p?'先选择原料。':qty===''?`可按 ${unitChoices(p.unit).map(([u])=>u).join(' / ')} 盘点；库存统一显示为 ${p.unit}。`:`盘点 ${qty} ${unit} = 库存 ${convertQty(qty,unit,p.unit)} ${p.unit}。`;}
+$('#adjustForm [name=product]').addEventListener('change',()=>updateStocktakeUnit());
+$('#adjustForm [name=unit]').addEventListener('change',updateStocktakeEquivalent);
+$('#adjustForm [name=qty]').addEventListener('input',updateStocktakeEquivalent);
 function openStocktake(){
   const products=Object.values(db.inventory); if(!products.length){toast('先新增原料并记录采购');return;}
   editingAdjustmentRecordId=null;const form=$('#adjustForm');form.reset();form.elements.product.disabled=false;populateStocktakeProducts();$('#adjustDialog').showModal();
@@ -242,14 +292,15 @@ function openStocktake(){
 $('#adjustStock').addEventListener('click',openStocktake);
 $('#quickStocktake').addEventListener('click',openStocktake);
 function editStocktake(id){
-  const a=db.adjustments.find(x=>(x.recordId||x.id)===id);if(!a)return;editingAdjustmentRecordId=id;const form=$('#adjustForm');form.elements.product.innerHTML=`<option value="${safe(a.id)}">${safe(a.name)}</option>`;form.elements.product.value=a.id;form.elements.product.disabled=true;form.elements.qty.value=a.actual??'';form.elements.note.value=a.note||'';$('#adjustDialog').showModal();
+  const a=db.adjustments.find(x=>(x.recordId||x.id)===id);if(!a)return;editingAdjustmentRecordId=id;const form=$('#adjustForm');form.elements.product.innerHTML=`<option value="${safe(a.id)}">${safe(a.name)}</option>`;form.elements.product.value=a.id;form.elements.product.disabled=true;form.elements.qty.value=a.inputQty??a.actual??'';form.elements.note.value=a.note||'';updateStocktakeUnit(a.inputUnit);$('#adjustDialog').showModal();
 }
 $('.close-button').addEventListener('click',()=>$('#adjustDialog').close());
 $('#adjustDialog').addEventListener('close',()=>{editingAdjustmentRecordId=null;$('#adjustForm').reset();$('#adjustForm [name=product]').disabled=false;});
 $('#adjustForm').addEventListener('submit',e=>{
-  e.preventDefault(); const f=new FormData(e.currentTarget), id=editingAdjustmentRecordId?db.adjustments.find(a=>(a.recordId||a.id)===editingAdjustmentRecordId)?.id:f.get('product'),p=db.inventory[id],actual=num(f.get('qty')); if(!p)return;
-  if(editingAdjustmentRecordId){const a=db.adjustments.find(x=>(x.recordId||x.id)===editingAdjustmentRecordId);a.actual=actual;a.note=f.get('note').trim();recalculateInventory(id);saveDB();$('#adjustDialog').close();toast('盘点记录已修改');return;}
-  const delta=Math.round((actual-p.qty)*1000)/1000; p.qty=actual; db.adjustments.push({recordId:crypto.randomUUID(),createdAt:new Date().toISOString(),date:today(),id:p.id,name:p.name,qty:delta,actual,note:f.get('note').trim()}); saveDB(); $('#adjustDialog').close(); e.currentTarget.reset(); toast('盘点结果已保存');
+  e.preventDefault(); const f=new FormData(e.currentTarget), id=editingAdjustmentRecordId?db.adjustments.find(a=>(a.recordId||a.id)===editingAdjustmentRecordId)?.id:f.get('product'),p=db.inventory[id]; if(!p)return;
+  const inputQty=num(f.get('qty')),inputUnit=f.get('unit'),actual=convertQty(inputQty,inputUnit,p.unit);if(actual==null){toast('盘点单位与库存单位不匹配');return;}
+  if(editingAdjustmentRecordId){const a=db.adjustments.find(x=>(x.recordId||x.id)===editingAdjustmentRecordId);Object.assign(a,{actual,inputQty,inputUnit,note:f.get('note').trim()});recalculateInventory(id);saveDB();$('#adjustDialog').close();toast('盘点记录已修改');return;}
+  const delta=roundQty(actual-p.qty); p.qty=actual; db.adjustments.push({recordId:crypto.randomUUID(),createdAt:new Date().toISOString(),date:today(),id:p.id,name:p.name,qty:delta,actual,inputQty,inputUnit,note:f.get('note').trim()}); saveDB(); $('#adjustDialog').close(); e.currentTarget.reset(); toast('盘点结果已保存');
 });
 
 function fillLossProducts(selectedId){
@@ -283,7 +334,7 @@ function monthTitle(d){return `${d.getFullYear()}年${d.getMonth()+1}月`;}
 function weekBounds(d){const start=new Date(d);start.setDate(start.getDate()-((start.getDay()+6)%7));const end=new Date(start);end.setDate(start.getDate()+6);return [start,end];}
 function periodBounds(){const d=parseDate(selectedDate);if(activePeriod==='day')return[d,d];if(activePeriod==='week')return weekBounds(d);if(activePeriod==='month')return[new Date(d.getFullYear(),d.getMonth(),1),new Date(d.getFullYear(),d.getMonth()+1,0)];return[new Date(d.getFullYear(),0,1),new Date(d.getFullYear(),11,31)];}
 function dailyTotals(d){const i=dateRecord(d), purchases=db.purchases.filter(p=>p.date===d).reduce((s,p)=>s+purchaseTotal(p),0), other=db.expenses.filter(e=>e.date===d).reduce((s,e)=>s+num(e.amount),0), income=totalIncome(i);return {cash:num(i.cash),wechat:num(i.wechat),alipay:num(i.alipay),income,purchases,other,expense:purchases+other,net:income-purchases-other};}
-function shortAmount(n){return n>=10000?(n/10000).toFixed(n%10000?1:0)+'万':n>=1000?(n/1000).toFixed(n%1000?1:0)+'千':Number(n).toFixed(Number(n)%1?1:0);}
+function shortAmount(n){return Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2});}
 function specialKind(category){return ({'学校放假':'school-break','学校活动':'school-event','节假日':'holiday','天气影响':'weather','市集/集会':'market','其他':'other'})[category]||'other';}
 function calendarDayMarkup(date,inPeriod=true){
   const key=dateString(date),tot=dailyTotals(key),event=db.specialDays[key],loss=db.losses.some(a=>a.date===key);
