@@ -1,5 +1,6 @@
 const DB_KEY = 'stall-ledger-v1';
-const blankDB = () => ({ incomes: {}, purchases: [], expenses: [], adjustments: [], losses: [], inventory: {}, specialDays: {} });
+const defaultExpenseCategories=['交通费','摊位费','运费','包装耗材','燃气电费','设备用品','其他支出'];
+const blankDB = () => ({ incomes: {}, purchases: [], expenses: [], expenseCategories:[...defaultExpenseCategories], adjustments: [], losses: [], inventory: {}, specialDays: {} });
 let db;
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
@@ -21,6 +22,7 @@ let editingPurchaseRecordId=null, editingExpenseRecordId=null, editingAdjustment
 let newProductReturnTo='purchase';
 function normalizeDB(raw){
   const data={...blankDB(),...raw};data.expenses=Array.isArray(data.expenses)?data.expenses:[];
+  data.expenseCategories=[...new Set([...defaultExpenseCategories,...(Array.isArray(data.expenseCategories)?data.expenseCategories:[]),...data.expenses.map(e=>e.category)].filter(x=>typeof x==='string'&&x.trim()))];
   for(const [date,income] of Object.entries(data.incomes)){
     const amount=num(income.otherExpense);
     if(amount>0&&!data.expenses.some(e=>e.recordId===`legacy-${date}`))data.expenses.push({recordId:`legacy-${date}`,date,category:'其他支出',item:'旧版每日支出',amount,note:'从旧版收入记录迁移',createdAt:`${date}T12:00:00`});
@@ -53,7 +55,7 @@ function normalizeDB(raw){
   return data;
 }
 function ratioForPrice(price,from,to){const factor=convertQty(1,from,to);return factor?roundQty(num(price)/factor):num(price);}
-function readDB(){ try { const raw=JSON.parse(localStorage.getItem(DB_KEY)||'{}');const migrated=Object.values(raw.incomes||{}).some(i=>Object.hasOwn(i,'otherExpense'))||raw.unitSchema!==2;const data=normalizeDB(raw);if(migrated)localStorage.setItem(DB_KEY,JSON.stringify(data));return data; } catch { return blankDB(); } }
+function readDB(){ try { const raw=JSON.parse(localStorage.getItem(DB_KEY)||'{}');const migrated=Object.values(raw.incomes||{}).some(i=>Object.hasOwn(i,'otherExpense'))||raw.unitSchema!==2||!Array.isArray(raw.expenseCategories);const data=normalizeDB(raw);if(migrated)localStorage.setItem(DB_KEY,JSON.stringify(data));return data; } catch { return blankDB(); } }
 function seedDefaultIngredients(){
   let changed=false;
   for(const [name,unit] of [['鸡蛋','个'],['面粉','kg'],['猪肉','kg']]){
@@ -74,8 +76,9 @@ function render(){
   $('#todayLabel').textContent=parseDate(d).toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
   $('#incomeToday').textContent=money(incoming); $('#expenseToday').textContent=money(expense); $('#netToday').textContent=money(incoming-expense);
   const products=Object.values(db.inventory); $('#stockKinds').textContent=products.filter(p=>p.qty>0).length;
-  renderProductSelect(); renderInventory(); renderPurchaseList(); renderExpenseList(); renderStocktakeList(); renderLossList(); renderAlerts(); renderChannelSummary(); renderIncomeList(); renderRecent(); renderWeekTrend(); renderCalendar(); renderReports();
+  renderProductSelect(); renderExpenseCategorySelect(); renderInventory(); renderPurchaseList(); renderExpenseList(); renderStocktakeList(); renderLossList(); renderAlerts(); renderChannelSummary(); renderIncomeList(); renderRecent(); renderWeekTrend(); renderCalendar(); renderReports();
 }
+function renderExpenseCategorySelect(){const select=$('#expenseForm [name=category]'),selected=select.value;select.innerHTML=db.expenseCategories.map(category=>`<option value="${safe(category)}">${safe(category)}</option>`).join('');if(db.expenseCategories.includes(selected))select.value=selected;}
 function renderProductSelect(){
   const select=$('#purchaseForm [name=productId]'),selected=select.value;
   select.innerHTML='<option value="">请选择原料</option>'+Object.values(db.inventory).sort((a,b)=>a.name.localeCompare(b.name,'zh-CN')).map(p=>`<option value="${safe(p.id)}">${safe(p.name)}</option>`).join('');
@@ -234,6 +237,9 @@ function editExpense(id){
   form.scrollIntoView({behavior:'smooth',block:'start'});
 }
 $('#cancelExpenseEdit').addEventListener('click',resetExpenseEdit);
+$('#addExpenseCategory').addEventListener('click',()=>{$('#expenseCategoryForm').reset();$('#expenseCategoryDialog').showModal();});
+$('.close-expense-category').addEventListener('click',()=>$('#expenseCategoryDialog').close());
+$('#expenseCategoryForm').addEventListener('submit',e=>{e.preventDefault();const name=e.currentTarget.elements.name.value.trim();if(!name)return;if(db.expenseCategories.some(category=>category.toLowerCase()===name.toLowerCase())){toast('这个分类已存在');return;}db.expenseCategories.push(name);saveDB();$('#expenseForm [name=category]').value=name;$('#expenseCategoryDialog').close();toast('支出分类已加入选项');});
 $('#expenseForm').addEventListener('submit',e=>{
   e.preventDefault();const form=e.currentTarget,f=new FormData(form);
   const fields={date:f.get('date'),category:f.get('category'),item:f.get('item').trim(),amount:num(f.get('amount')),note:f.get('note').trim()};
@@ -256,10 +262,10 @@ $('#newProductForm').addEventListener('submit',e=>{
   $('#newProductDialog').close();form.reset();$('#newProductThresholdUnit').textContent='单位';toast('原料已加入选项');
 });
 function openProductEdit(id){
-  const p=db.inventory[id];if(!p)return;editingProductId=id;const form=$('#productForm');form.elements.name.value=p.name;form.elements.unit.value=p.unit;form.elements.threshold.value=p.threshold??'';$('#productThresholdUnit').textContent=p.unit;$('#productDialog').showModal();
+  const p=db.inventory[id];if(!p)return;editingProductId=id;const form=$('#productForm');form.elements.name.value=p.name;form.elements.unit.value=p.unit;form.elements.unit.dataset.previousUnit=p.unit;form.elements.threshold.value=p.threshold??'';$('#productThresholdUnit').textContent=p.unit;$('#productDialog').showModal();
 }
 $('.close-product').addEventListener('click',()=>$('#productDialog').close());
-$('#productForm [name=unit]').addEventListener('change',e=>$('#productThresholdUnit').textContent=e.target.value||'单位');
+$('#productForm [name=unit]').addEventListener('change',e=>{const select=e.target,oldUnit=select.dataset.previousUnit,newUnit=select.value,threshold=$('#productForm [name=threshold]');if(threshold.value!==''){const converted=convertQty(threshold.value,oldUnit,newUnit);if(converted!=null)threshold.value=converted;}select.dataset.previousUnit=newUnit;$('#productThresholdUnit').textContent=newUnit||'单位';});
 $('#productForm').addEventListener('submit',e=>{
   e.preventDefault();const p=db.inventory[editingProductId];if(!p)return;const f=new FormData(e.currentTarget),name=f.get('name').trim(),unit=f.get('unit');
   if(Object.values(db.inventory).some(x=>x.id!==p.id&&x.name.toLowerCase()===name.toLowerCase())){toast('已有同名原料，请换一个名称');return;}
@@ -338,7 +344,7 @@ function shortAmount(n){return Number(n).toLocaleString('en-US',{minimumFraction
 function specialKind(category){return ({'学校放假':'school-break','学校活动':'school-event','节假日':'holiday','天气影响':'weather','市集/集会':'market','其他':'other'})[category]||'other';}
 function calendarDayMarkup(date,inPeriod=true){
   const key=dateString(date),tot=dailyTotals(key),event=db.specialDays[key],loss=db.losses.some(a=>a.date===key);
-  return `<button class="calendar-day ${inPeriod?'':'outside'} ${key===calendarDate?'selected':''} ${key===today()?'today':''} ${activityOn(key)?'has-record':''} ${event?`special-day special-kind-${specialKind(event.category)}`:''}" data-date="${key}" title="${event?safe(event.category+' · '+event.title):key}" aria-label="${key}${event?'，'+safe(event.title):''}，收入${money(tot.income)}，支出${money(tot.expense)}${loss?'，有额外损耗':''}"><b>${date.getDate()}</b><span class="calendar-amounts">${tot.income?`<small class="calendar-income">+${shortAmount(tot.income)}</small>`:''}${tot.expense?`<small class="calendar-expense">−${shortAmount(tot.expense)}</small>`:''}${loss?'<small class="calendar-loss">•损耗</small>':''}</span></button>`;
+  return `<button class="calendar-day ${inPeriod?'':'outside'} ${key===calendarDate?'selected':''} ${key===today()?'today':''} ${activityOn(key)?'has-record':''} ${event?`special-day special-kind-${specialKind(event.category)}`:''}" data-date="${key}" title="${event?safe(event.category+' · '+event.title):key}" aria-label="${key}${event?'，'+safe(event.title):''}，收入${money(tot.income)}，支出${money(tot.expense)}${loss?'，有额外损耗':''}"><b>${date.getDate()}</b><span class="calendar-event-slot">${event?`<em class="calendar-event">${safe(event.title)}</em>`:''}</span><span class="calendar-amounts">${tot.income?`<small class="calendar-income">+${shortAmount(tot.income)}</small>`:''}${tot.expense?`<small class="calendar-expense">−${shortAmount(tot.expense)}</small>`:''}${loss?'<small class="calendar-loss">•损耗</small>':''}</span></button>`;
 }
 function renderCalendar(){
   const chosen=parseDate(calendarDate),grid=$('#calendarGrid'),weekdays=$('#calendarWeekdays');
