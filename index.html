@@ -17,7 +17,7 @@
 
     <main>
       <section class="hero-card">
-        <div class="hero-head"><div><span class="muted-light">当日经营结余</span><h2 id="netToday">¥0.00</h2></div><div class="bear-art" aria-hidden="true"><span class="bear-ear ear-left"></span><span class="bear-ear ear-right"></span><span class="bear-face"><span class="bear-eye eye-left"></span><span class="bear-eye eye-right"></span><span class="bear-nose"></span><span class="bear-cheek cheek-left"></span><span class="bear-cheek cheek-right"></span></span></div></div>
+        <div class="hero-head"><div><span class="muted-light">当日经营结余</span><h2 id="netToday">¥0.00</h2></div><div class="bear-art" aria-hidden="true"><img class="bear-doodle" src="bear.svg" alt="" /></div></div>
         <div class="hero-stats">
           <button id="openIncomeSummary" type="button"><span>当日收入 ›</span><strong id="incomeToday">¥0.00</strong></button>
           <button id="openExpenseSummary" type="button"><span>当日支出 ›</span><strong id="expenseToday">¥0.00</strong></button>
@@ -76,7 +76,7 @@
       </section>
 
       <section class="view" id="view-expenses">
-        <div class="section-heading expenses-page-heading"><div><p class="eyebrow">EXPENSES</p><h2>记录支出</h2></div></div>
+        <div class="section-heading expenses-page-heading"><img class="expense-bear" src="bear.svg" alt="" /><div><p class="eyebrow">小熊记账 · 采购与日常花费</p><h2>记录支出</h2></div></div>
         <p class="inventory-explainer">采购记在下方并自动入库；交通费、摊位费等单独记为其他支出。</p>
         <div class="section-heading compact"><div><p class="eyebrow">PURCHASE</p><h2>原料采购</h2></div></div>
         <form id="purchaseForm" class="form-card">
@@ -153,6 +153,7 @@
     <form method="dialog" id="adjustForm" class="form-card dialog-card">
       <button class="close-button" type="button" aria-label="取消并关闭">×</button>
       <p class="eyebrow">STOCKTAKE</p><h2>收摊盘点</h2>
+      <label class="field">盘点日期<input name="date" type="date" required /></label>
       <div class="field"><span>原料</span><div class="product-select-control"><select name="product" required></select><button id="addProductFromStocktake" class="outline-button" type="button">＋ 新增原料</button></div></div>
       <div class="form-row"><label class="field">实际剩余数量<input name="qty" type="number" min="0" step="0.001" inputmode="decimal" placeholder="盘点后填实际剩余数量" required /></label><label class="field unit-field">盘点单位<select name="unit" required></select></label></div>
       <p id="stocktakeEquivalent" class="unit-conversion-hint">选择原料并填写数量后显示库存换算。</p>
@@ -203,12 +204,25 @@
       </form>
     </div>
   </dialog>
+  <dialog id="calendarActionDialog">
+    <div class="form-card dialog-card calendar-action-card">
+      <button class="close-calendar-action" type="button" aria-label="取消并关闭">×</button>
+      <p class="eyebrow">DAILY ACTIONS</p><h2 id="calendarActionTitle">选择日期操作</h2>
+      <p id="calendarActionSummary" class="calendar-action-summary"></p>
+      <div class="calendar-action-grid">
+        <button type="button" data-calendar-action="income"><span>＋</span><b>记收入</b></button>
+        <button type="button" data-calendar-action="expense"><span>−</span><b>记支出</b></button>
+        <button type="button" data-calendar-action="stocktake"><span>✓</span><b>收摊盘点</b></button>
+        <button type="button" data-calendar-action="special"><span>☆</span><b id="calendarSpecialActionLabel">标记特别日期</b></button>
+      </div>
+    </div>
+  </dialog>
   <dialog id="productDialog">
     <form id="productForm" class="form-card dialog-card">
       <button class="close-product" type="button" aria-label="取消并关闭">×</button>
       <p class="eyebrow">INGREDIENT SETTINGS</p><h2>修改原料信息</h2>
       <label class="field">原料名称<input name="name" maxlength="60" required /></label>
-      <label class="field">库存统一单位<select name="unit" required><option value="kg">kg（公斤，2 斤）</option><option value="g">g（克）</option><option>个</option><option>份</option><option>盒</option><option>袋</option><option>包</option><option>瓶</option><option>杯</option><option>串</option><option>件</option><option>箱</option><option value="L">L（升）</option><option value="mL">mL（毫升）</option><option>桶</option></select></label>
+      <label class="field">库存统一单位<select name="unit" required><option value="kg">kg</option><option value="g">g</option><option>个</option><option>份</option><option>盒</option><option>袋</option><option>包</option><option>瓶</option><option>杯</option><option>串</option><option>件</option><option>箱</option><option value="L">L</option><option value="mL">mL</option><option>桶</option></select></label>
       <label class="field">补货提醒值<div class="threshold-control"><input name="threshold" type="number" min="0" step="0.001" inputmode="decimal" placeholder="可不填" /><span id="productThresholdUnit">单位</span></div></label>
       <button class="primary-button" type="submit">保存原料信息</button>
       <button id="deleteProduct" class="delete-record cancel-edit" type="button">删除这个原料</button>
@@ -221,7 +235,7 @@
       <p class="form-hint">常见原料建议，点选后还可以修改：</p>
       <div class="ingredient-suggestions"><button type="button" data-suggest-name="鸡蛋" data-suggest-unit="个">鸡蛋</button><button type="button" data-suggest-name="面粉" data-suggest-unit="kg">面粉</button><button type="button" data-suggest-name="肉馅" data-suggest-unit="kg">肉馅</button><button type="button" data-suggest-name="食用油" data-suggest-unit="L">食用油</button><button type="button" data-suggest-name="香葱" data-suggest-unit="g">香葱</button><button type="button" data-suggest-name="酵母" data-suggest-unit="g">酵母</button><button type="button" data-suggest-name="食盐" data-suggest-unit="袋">食盐</button><button type="button" data-suggest-name="酱料" data-suggest-unit="瓶">酱料</button></div>
       <label class="field">原料名称<input name="name" maxlength="60" placeholder="例如：鸡蛋、面粉" required /></label>
-      <label class="field">库存统一单位<select name="unit" required><option value="">请选择单位</option><option value="kg">kg（公斤，2 斤）</option><option value="g">g（克）</option><option>个</option><option>份</option><option>盒</option><option>袋</option><option>包</option><option>瓶</option><option>杯</option><option>串</option><option>件</option><option>箱</option><option value="L">L（升）</option><option value="mL">mL（毫升）</option><option>桶</option></select></label>
+      <label class="field">库存统一单位<select name="unit" required><option value="">请选择单位</option><option value="kg">kg</option><option value="g">g</option><option>个</option><option>份</option><option>盒</option><option>袋</option><option>包</option><option>瓶</option><option>杯</option><option>串</option><option>件</option><option>箱</option><option value="L">L</option><option value="mL">mL</option><option>桶</option></select></label>
       <label class="field">补货提醒值<div class="threshold-control"><input name="threshold" type="number" min="0" step="0.001" inputmode="decimal" placeholder="可不填" /><span id="newProductThresholdUnit">单位</span></div></label>
       <p class="form-hint">当前库存低于或等于这个固定数量时提醒补货。</p>
       <button class="primary-button" type="submit">保存到原料列表</button>
