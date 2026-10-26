@@ -26,6 +26,20 @@
 .stocktake-quick b,.stocktake-quick small{align-self:center}
 .home-calendar-heading{margin-top:7px;margin-bottom:7px}.home-calendar-card{padding:9px 11px 8px}.home-calendar-card .calendar-head{margin-bottom:3px}.home-calendar-card .calendar-day{height:46px}.home-calendar-card .calendar-day b{width:20px;height:20px;font-size:10px}.home-calendar-card .calendar-amounts{min-height:17px;gap:0}.home-calendar-card .calendar-amounts small{font-size:7px;line-height:8px}.home-calendar-card .calendar-legend{margin-top:5px}.home-calendar-heading+.calendar-period-switch{margin:5px 0 6px}
 .app-shell:not(.show-home) .topbar,.app-shell:not(.show-home) .hero-card{display:none}.app-shell:not(.show-home) .tabs{padding-top:0}
+.unit-conversion-hint{margin:0 0 10px;padding:8px 10px;border-radius:10px;background:#f0f5ed;color:#4e7059;font-size:10px;line-height:1.45}
+.calendar-amounts small{font-variant-numeric:tabular-nums;letter-spacing:-.2px}
+.home-calendar-card .calendar-amounts small{font-size:clamp(6px,1.7vw,8px)}
+.bear-art{width:55px;height:54px;flex:none;margin:0 1px 0 8px;transform:none!important;overflow:visible}
+.bear-ear{width:19px;height:19px;top:3px;background:#b7815e;border:2px solid #ae7855}
+.bear-ear::after{content:"";position:absolute;inset:5px;border-radius:50%;background:#e6b7a0}
+.bear-ear.ear-left{left:5px}.bear-ear.ear-right{right:5px}
+.bear-face{left:4px;top:11px;width:47px;height:42px}
+.bear-eye{top:16px}.bear-eye.eye-left{left:12px}.bear-eye.eye-right{right:12px}
+.bear-nose{top:24px;left:18px}.bear-cheek{top:24px}.bear-cheek.cheek-left{left:5px}.bear-cheek.cheek-right{right:5px}
+.expenses-page-heading{padding:13px 15px;margin-bottom:10px!important;border-radius:16px;background:linear-gradient(110deg,#e4f0e5,#f7f9f4);border-left:4px solid #77b889}
+.expenses-page-heading h2{font-size:22px!important;color:#28573d;font-weight:800}
+#view-expenses>.section-heading.compact h2{font-size:15px;color:#3e5042}
+#view-expenses>.section-heading.compact .eyebrow{font-size:8px}
 @media(max-width:600px){
   .app-shell{max-width:520px;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
   .topbar{padding-top:4px}
@@ -50,16 +64,16 @@
   .show-home .hero-card{padding:11px 13px;border-radius:18px}
   .show-home .hero-card h2{font-size:26px;margin:2px 0 8px}
   .show-home .muted-light{font-size:10px}
-  .show-home .bear-art{width:49px;height:49px;transform:scale(.66);transform-origin:top right;margin:0}
+  .show-home .bear-art{width:55px;height:54px;transform:none;margin:0}
   .show-home .hero-stats{padding-top:8px}
   .show-home .hero-stats button span{font-size:8px}
   .show-home .hero-stats button strong{font-size:11px}
   .show-home #view-overview>.section-heading:first-child{margin:9px 0 6px}
   .show-home #view-overview>.section-heading:first-child h2,.show-home .home-calendar-heading h2{font-size:16px}
-  .show-home .quick-card,.show-home .stocktake-quick{min-height:66px;padding:5px 3px;gap:2px}
-  .show-home .quick-icon{width:21px;height:21px;font-size:14px}
-  .show-home .quick-card b{font-size:10px}
-  .show-home .quick-card small{font-size:8px}
+  .show-home .quick-card,.show-home .stocktake-quick{min-height:75px;padding:7px 3px;gap:2px}
+  .show-home .quick-icon{width:29px;height:29px;font-size:20px}
+  .show-home .quick-card b{font-size:13px;font-weight:800}
+  .show-home .quick-card small{font-size:8px;opacity:.65}
   .show-home .home-calendar-heading{margin:9px 0 5px}
   .show-home .calendar-period-switch{margin:3px 0 5px}
   .show-home .calendar-period-switch button{padding:5px}
