@@ -12,11 +12,12 @@ const unitFactors={kg:1000,g:1,'公斤':1000,'斤':500,'两':50,'克':1,L:1000,m
 const unitGroup=unit=>['kg','g','公斤','斤','两','克'].includes(unit)?'mass':['L','mL','升','毫升'].includes(unit)?'volume':unit;
 const roundQty=value=>Math.round((value+Number.EPSILON)*1000000)/1000000;
 function convertQty(qty,from,to){if(from===to)return num(qty);if(unitGroup(from)!==unitGroup(to)||!unitFactors[from]||!unitFactors[to])return null;return roundQty(num(qty)*unitFactors[from]/unitFactors[to]);}
-function unitChoices(unit){return unitGroup(unit)==='mass'?[['kg','kg（公斤，2 斤）'],['g','g（克）']]:unitGroup(unit)==='volume'?[['L','L（升）'],['mL','mL（毫升）']]:[[unit,unit]];}
+function unitChoices(unit){return unitGroup(unit)==='mass'?[['kg','kg'],['g','g']]:unitGroup(unit)==='volume'?[['L','L'],['mL','mL']]:[[unit,unit]];}
 function unitOptions(unit){return unitChoices(unit).map(([value,label])=>`<option value="${safe(value)}">${safe(label)}</option>`).join('');}
 db = readDB();
 let activePeriod='month', selectedDate=today(), dashboardDate=today();
 let reportChartStyle='bar', reportChartMetric='income';
+let comparisonCategory='';
 let calendarPeriod='month', calendarDate=today(), markedDate=today();
 let editingPurchaseRecordId=null, editingExpenseRecordId=null, editingAdjustmentRecordId=null, editingLossRecordId=null, editingProductId=null;
 let newProductReturnTo='purchase';
@@ -96,7 +97,7 @@ function updatePurchaseProduct(){
   updatePurchaseConversionHint();
 }
 $('#purchaseForm [name=productId]').addEventListener('change',updatePurchaseProduct);
-function updatePurchaseConversionHint(){const form=$('#purchaseForm'),p=db.inventory[form.elements.productId.value],unit=form.elements.unit.value,qty=form.elements.qty.value,target=$('#purchaseConversionHint');if(!p){target.textContent='选择原料后，可按适用单位记录采购。';return;}const converted=qty===''?null:convertQty(qty,unit,p.unit);target.textContent=converted==null?`库存统一按 ${p.unit} 记录。kg = 公斤 = 2 斤，g = 克。`:`本次 ${qty} ${unit} = 入库 ${converted} ${p.unit}；补货提醒值也按 ${p.unit} 填写。`;}
+function updatePurchaseConversionHint(){const form=$('#purchaseForm'),p=db.inventory[form.elements.productId.value],unit=form.elements.unit.value,qty=form.elements.qty.value,target=$('#purchaseConversionHint');if(!p){target.textContent='选择原料后，可按适用单位记录采购。';return;}const converted=qty===''?null:convertQty(qty,unit,p.unit);target.textContent=converted==null?`库存统一按 ${p.unit} 记录。${unitGroup(p.unit)==='mass'?'1 kg = 1000 g。':''}`:`本次 ${qty} ${unit} = 入库 ${converted} ${p.unit}；补货提醒值也按 ${p.unit} 填写。`;}
 $('#purchaseForm [name=unit]').addEventListener('change',updatePurchaseConversionHint);
 $('#purchaseForm [name=qty]').addEventListener('input',updatePurchaseConversionHint);
 function renderInventory(){
@@ -291,22 +292,22 @@ function updateStocktakeEquivalent(){const form=$('#adjustForm'),p=db.inventory[
 $('#adjustForm [name=product]').addEventListener('change',()=>updateStocktakeUnit());
 $('#adjustForm [name=unit]').addEventListener('change',updateStocktakeEquivalent);
 $('#adjustForm [name=qty]').addEventListener('input',updateStocktakeEquivalent);
-function openStocktake(){
+function openStocktake(date=today()){
   const products=Object.values(db.inventory); if(!products.length){toast('先新增原料并记录采购');return;}
-  editingAdjustmentRecordId=null;const form=$('#adjustForm');form.reset();form.elements.product.disabled=false;populateStocktakeProducts();$('#adjustDialog').showModal();
+  editingAdjustmentRecordId=null;const form=$('#adjustForm');form.reset();form.elements.date.value=date;form.elements.product.disabled=false;populateStocktakeProducts();$('#adjustDialog').showModal();
 }
-$('#adjustStock').addEventListener('click',openStocktake);
-$('#quickStocktake').addEventListener('click',openStocktake);
+$('#adjustStock').addEventListener('click',()=>openStocktake());
+$('#quickStocktake').addEventListener('click',()=>openStocktake());
 function editStocktake(id){
-  const a=db.adjustments.find(x=>(x.recordId||x.id)===id);if(!a)return;editingAdjustmentRecordId=id;const form=$('#adjustForm');form.elements.product.innerHTML=`<option value="${safe(a.id)}">${safe(a.name)}</option>`;form.elements.product.value=a.id;form.elements.product.disabled=true;form.elements.qty.value=a.inputQty??a.actual??'';form.elements.note.value=a.note||'';updateStocktakeUnit(a.inputUnit);$('#adjustDialog').showModal();
+  const a=db.adjustments.find(x=>(x.recordId||x.id)===id);if(!a)return;editingAdjustmentRecordId=id;const form=$('#adjustForm');form.elements.date.value=a.date;form.elements.product.innerHTML=`<option value="${safe(a.id)}">${safe(a.name)}</option>`;form.elements.product.value=a.id;form.elements.product.disabled=true;form.elements.qty.value=a.inputQty??a.actual??'';form.elements.note.value=a.note||'';updateStocktakeUnit(a.inputUnit);$('#adjustDialog').showModal();
 }
 $('.close-button').addEventListener('click',()=>$('#adjustDialog').close());
 $('#adjustDialog').addEventListener('close',()=>{editingAdjustmentRecordId=null;$('#adjustForm').reset();$('#adjustForm [name=product]').disabled=false;});
 $('#adjustForm').addEventListener('submit',e=>{
   e.preventDefault(); const f=new FormData(e.currentTarget), id=editingAdjustmentRecordId?db.adjustments.find(a=>(a.recordId||a.id)===editingAdjustmentRecordId)?.id:f.get('product'),p=db.inventory[id]; if(!p)return;
   const inputQty=num(f.get('qty')),inputUnit=f.get('unit'),actual=convertQty(inputQty,inputUnit,p.unit);if(actual==null){toast('盘点单位与库存单位不匹配');return;}
-  if(editingAdjustmentRecordId){const a=db.adjustments.find(x=>(x.recordId||x.id)===editingAdjustmentRecordId);Object.assign(a,{actual,inputQty,inputUnit,note:f.get('note').trim()});recalculateInventory(id);saveDB();$('#adjustDialog').close();toast('盘点记录已修改');return;}
-  const delta=roundQty(actual-p.qty); p.qty=actual; db.adjustments.push({recordId:crypto.randomUUID(),createdAt:new Date().toISOString(),date:today(),id:p.id,name:p.name,qty:delta,actual,inputQty,inputUnit,note:f.get('note').trim()}); saveDB(); $('#adjustDialog').close(); e.currentTarget.reset(); toast('盘点结果已保存');
+  if(editingAdjustmentRecordId){const a=db.adjustments.find(x=>(x.recordId||x.id)===editingAdjustmentRecordId);Object.assign(a,{date:f.get('date'),actual,inputQty,inputUnit,note:f.get('note').trim()});recalculateInventory(id);saveDB();$('#adjustDialog').close();toast('盘点记录已修改');return;}
+  db.adjustments.push({recordId:crypto.randomUUID(),createdAt:new Date().toISOString(),date:f.get('date'),id:p.id,name:p.name,qty:0,actual,inputQty,inputUnit,note:f.get('note').trim()});recalculateInventory(id);saveDB();$('#adjustDialog').close();e.currentTarget.reset();toast('盘点结果已保存');
 });
 
 function fillLossProducts(selectedId){
@@ -356,8 +357,12 @@ function renderCalendar(){
   }
   let start,end;if(calendarPeriod==='day'){start=new Date(chosen);end=new Date(chosen);}else if(calendarPeriod==='week'){[start,end]=weekBounds(chosen);}else{const first=new Date(chosen.getFullYear(),chosen.getMonth(),1);start=new Date(first);start.setDate(first.getDate()-((first.getDay()+6)%7));const last=new Date(chosen.getFullYear(),chosen.getMonth()+1,0);end=new Date(last);end.setDate(last.getDate()+(7-((last.getDay()+6)%7)-1));}
   const html=[];for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1))html.push(calendarDayMarkup(d,calendarPeriod!=='month'||d.getMonth()===chosen.getMonth()));
-  grid.innerHTML=html.join('');$$('.calendar-day',grid).forEach(b=>b.addEventListener('click',()=>openSpecialDay(b.dataset.date)));
+  grid.innerHTML=html.join('');$$('.calendar-day',grid).forEach(b=>b.addEventListener('click',()=>openCalendarActions(b.dataset.date)));
 }
+let calendarActionDate=today();
+function openCalendarActions(date){calendarActionDate=date;calendarDate=date;renderCalendar();const totals=dailyTotals(date);$('#calendarActionTitle').textContent=`${date} · 记录这一天`;$('#calendarActionSummary').textContent=`收入 ${money(totals.income)} · 支出 ${money(totals.expense)}${db.specialDays[date]?` · ${db.specialDays[date].title}`:''}`;$('#calendarSpecialActionLabel').textContent=db.specialDays[date]?'查看／修改特别日期':'标记特别日期';$('#calendarActionDialog').showModal();}
+$('.close-calendar-action').addEventListener('click',()=>$('#calendarActionDialog').close());
+$$('[data-calendar-action]').forEach(button=>button.addEventListener('click',()=>{const date=calendarActionDate,action=button.dataset.calendarAction;$('#calendarActionDialog').close();if(action==='income'){$('#incomeForm [name=date]').value=date;loadIncomeDate();activateTab('income');}if(action==='expense'){$('#purchaseForm [name=date]').value=date;$('#expenseForm [name=date]').value=date;activateTab('expenses');}if(action==='stocktake')openStocktake(date);if(action==='special')openSpecialDay(date);}));
 function syncCalendarPeriodButtons(){$$('[data-calendar-period]').forEach(b=>b.classList.toggle('active',b.dataset.calendarPeriod===calendarPeriod));}
 $$('[data-calendar-period]').forEach(b=>b.addEventListener('click',()=>{calendarPeriod=b.dataset.calendarPeriod;syncCalendarPeriodButtons();renderCalendar();}));
 function shiftCalendar(direction){const d=parseDate(calendarDate);if(calendarPeriod==='day')d.setDate(d.getDate()+direction);else if(calendarPeriod==='week')d.setDate(d.getDate()+7*direction);else if(calendarPeriod==='month')d.setMonth(d.getMonth()+direction,1);else d.setFullYear(d.getFullYear()+direction);calendarDate=dateString(d);renderCalendar();}
@@ -414,12 +419,16 @@ function renderAnalysis(dates,totals,startKey,endKey){
   const best=incomeDates.map(d=>({date:d,income:totalIncome(db.incomes[d])})).sort((a,b)=>b.income-a.income)[0];
   const channelEntries=[['现金',totals.cash],['微信',totals.wechat],['支付宝',totals.alipay]].sort((a,b)=>b[1]-a[1]);
   const top=channelEntries[0],share=totals.income?Math.round(top[1]/totals.income*100):0;
-  const special=incomeDates.filter(d=>db.specialDays[d]),ordinary=incomeDates.filter(d=>!db.specialDays[d]);
+  const allSpecial=incomeDates.filter(d=>db.specialDays[d]),ordinary=incomeDates.filter(d=>!db.specialDays[d]);
+  const specialCategories=[...new Set(allSpecial.map(d=>db.specialDays[d].category))];if(!specialCategories.includes(comparisonCategory))comparisonCategory=specialCategories[0]||'';
+  const special=allSpecial.filter(d=>db.specialDays[d].category===comparisonCategory);
   const specialAvg=special.length?special.reduce((s,d)=>s+totalIncome(db.incomes[d]),0)/special.length:0;
   const ordinaryAvg=ordinary.length?ordinary.reduce((s,d)=>s+totalIncome(db.incomes[d]),0)/ordinary.length:0;
-  let comparison='记录几次特殊日期后，就能和普通营业日对比';
-  if(special.length&&ordinary.length){const pct=ordinaryAvg?Math.round((specialAvg/ordinaryAvg-1)*100):null;comparison=`特殊日 ${special.length} 天 · 普通日 ${ordinary.length} 天 · ${pct===null?'普通日收入为 ¥0':`特殊日平均${pct>=0?'高':'低'} ${Math.abs(pct)}%`}`;}
-  $('#analysisCards').innerHTML=`<div class="analysis-card"><span>有收入记录的日均</span><b>${money(avg)}</b><small>共 ${activeCount} 天</small></div><div class="analysis-card"><span>本周期最高收入日</span><b>${best?money(best.income):'—'}</b><small>${best?safe(best.date):'记录后显示'}</small></div><div class="analysis-card"><span>主要收款渠道</span><b>${totals.income?`${top[0]} · ${share}%`:'—'}</b><small>${totals.income?`${money(top[1])} / 总收入 ${money(totals.income)}`:'记录收入后显示'}</small></div><div class="analysis-card"><span>特殊日期对比</span><b>${special.length?money(specialAvg):'待积累'}</b><small>${safe(comparison)}</small></div>`;
+  let comparison='本周期还没有带收入记录的特别日期';
+  if(special.length&&!ordinary.length)comparison=`${comparisonCategory} ${special.length} 天；本周期没有普通营业日可比较`;
+  if(special.length&&ordinary.length){const pct=ordinaryAvg?Math.round((specialAvg/ordinaryAvg-1)*100):null;comparison=`${comparisonCategory} ${special.length} 天，日均 ${money(specialAvg)}；普通营业日 ${ordinary.length} 天，日均 ${money(ordinaryAvg)}${pct===null?'':`；高低差 ${pct>=0?'+':''}${pct}%`}`;}
+  $('#analysisCards').innerHTML=`<div class="analysis-card"><span>有收入记录的日均</span><b>${money(avg)}</b><small>共 ${activeCount} 天</small></div><div class="analysis-card"><span>本周期最高收入日</span><b>${best?money(best.income):'—'}</b><small>${best?safe(best.date):'记录后显示'}</small></div><div class="analysis-card"><span>主要收款渠道</span><b>${totals.income?`${top[0]} · ${share}%`:'—'}</b><small>${totals.income?`${money(top[1])} / 总收入 ${money(totals.income)}`:'记录收入后显示'}</small></div><div class="analysis-card special-comparison"><span>特别日期与普通营业日</span>${specialCategories.length?`<select id="compareSpecialCategory" aria-label="选择特别日期类型">${specialCategories.map(category=>`<option value="${safe(category)}" ${category===comparisonCategory?'selected':''}>${safe(category)}</option>`).join('')}</select>`:''}<b>${special.length?money(specialAvg):'待积累'}</b><small>${safe(comparison)}</small></div>`;
+  $('#compareSpecialCategory')?.addEventListener('change',e=>{comparisonCategory=e.target.value;renderReports();});
   const start=parseDate(startKey),end=parseDate(endKey),previousEnd=new Date(start);previousEnd.setDate(start.getDate()-1);
   let previousStart=new Date(previousEnd);
   if(activePeriod==='week')previousStart.setDate(previousEnd.getDate()-6);
