@@ -129,4 +129,18 @@
 .text-button,#view-overview .text-button[data-tab-link],#view-inventory #adjustStock,#view-expenses .text-button{display:inline-flex;align-items:center;justify-content:center;min-height:32px;padding:6px 12px;border:1px solid #cfd3d0;border-radius:10px;background:linear-gradient(180deg,#ffffff,#f2f4f1);color:#4b5c51;font-size:11px;font-weight:750;box-shadow:0 2px 0 #d9ddd8,0 4px 8px #374d3514;cursor:pointer}
 .text-button:active,#view-overview .text-button[data-tab-link]:active{transform:translateY(1px);box-shadow:0 1px 0 #d9ddd8}
 #view-expenses .outline-button{border-color:#cfd3d0;background:linear-gradient(180deg,#fff,#f2f4f1);color:#4b5c51;box-shadow:0 2px 0 #d9ddd8;font-size:11px}
+.calendar-day.special-kind-school-break,.special-day-dialog[data-special-kind="school-break"]{--special-fill:#e7ccd9;--special-stroke:#bd91a7;--special-panel:#f1dfe8}
+.calendar-day.special-kind-school-event,.special-day-dialog[data-special-kind="school-event"]{--special-fill:#e9c8cf;--special-stroke:#c28e9d;--special-panel:#f3e0e4}
+.calendar-day.special-kind-holiday,.special-day-dialog[data-special-kind="holiday"]{--special-fill:#e9d2bf;--special-stroke:#c5a184;--special-panel:#f3e5d8}
+.calendar-day.special-kind-weather,.special-day-dialog[data-special-kind="weather"]{--special-fill:#d0dce5;--special-stroke:#8fa8b8;--special-panel:#e2ebf1}
+.calendar-day.special-kind-market,.special-day-dialog[data-special-kind="market"]{--special-fill:#d1dfd4;--special-stroke:#8faa97;--special-panel:#e3eee5}
+.calendar-day.special-kind-other,.special-day-dialog[data-special-kind="other"]{--special-fill:#dad5e5;--special-stroke:#a29bb9;--special-panel:#eae6f1}
+.calendar-day.selected b{background:#b9cabd;color:#294335;box-shadow:0 0 0 2px #8eaa96}
+.calendar-day.special-day b{box-shadow:inset 0 0 0 1.5px var(--special-stroke),0 0 0 2px #ffffff}
+.calendar-day.special-day::before{display:none}
+.calendar-event-slot{height:15px;min-height:15px}
+.calendar-event{max-width:calc(100% - 1px);min-height:14px;padding:1px 3px;border-radius:5px;background:var(--special-fill);color:#423d41;border-color:var(--special-stroke);font-size:8px;line-height:10px}
+.home-calendar-card .calendar-day{height:66px}
+.home-calendar-card .calendar-day b{width:26px;height:26px;font-size:12px}
+@media(max-width:600px){.show-home .home-calendar-card .calendar-day{height:62px}.show-home .home-calendar-card .calendar-day b{width:25px;height:25px;font-size:11px}.show-home .home-calendar-card .calendar-amounts{min-height:19px}}
 
