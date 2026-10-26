@@ -28,7 +28,8 @@
       <nav class="tabs" aria-label="功能导航">
         <button class="tab active" data-tab="overview"><span class="tab-icon" aria-hidden="true">⌂</span><span>首页</span></button>
         <button class="tab" data-tab="income"><span class="tab-icon" aria-hidden="true">¥</span><span>收入</span></button>
-        <button class="tab" data-tab="purchase"><span class="tab-icon" aria-hidden="true">▣</span><span>采购库存</span></button>
+        <button class="tab" data-tab="expenses"><span class="tab-icon" aria-hidden="true">−</span><span>支出</span></button>
+        <button class="tab" data-tab="inventory"><span class="tab-icon" aria-hidden="true">▣</span><span>库存</span></button>
         <button class="tab" data-tab="reports"><span class="tab-icon" aria-hidden="true">▥</span><span>报表</span></button>
       </nav>
 
@@ -36,11 +37,21 @@
         <div class="section-heading"><div><p class="eyebrow">快捷操作</p><h2>今天记一笔</h2></div><span class="soft-tag">收摊后约 1 分钟</span></div>
         <div class="quick-grid">
           <button class="quick-card income-quick" data-open="income" aria-label="记录所选日期的收入，按现金微信支付宝汇总"><span class="quick-icon" aria-hidden="true">＋</span><b>记收入</b><small>按渠道汇总</small></button>
-          <button class="quick-card purchase-quick" data-open="purchase" aria-label="记录原料采购并入库"><span class="quick-icon" aria-hidden="true">▣</span><b>记采购</b><small>原料入库</small></button>
+          <button class="quick-card purchase-quick" data-open="expenses" aria-label="记录原料采购并入库"><span class="quick-icon" aria-hidden="true">▣</span><b>记采购</b><small>原料入库</small></button>
           <button class="quick-card stocktake-quick" id="quickStocktake" aria-label="收摊盘点并更新原料实际剩余"><span class="quick-icon" aria-hidden="true">✓</span><b>收摊盘点</b><small>更新剩余</small></button>
         </div>
-        <div class="section-heading compact"><div><p class="eyebrow">STOCK WATCH</p><h2>库存提醒</h2></div><button class="text-button" data-tab-link="purchase">管理库存 →</button></div>
+        <div class="section-heading compact"><div><p class="eyebrow">STOCK WATCH</p><h2>库存提醒</h2></div><button class="text-button" data-tab-link="inventory">管理库存 →</button></div>
         <div id="stockAlerts" class="list-card"></div>
+        <div class="section-heading compact"><div><p class="eyebrow">LAST 7 DAYS</p><h2>近一周经营变化</h2></div><button class="text-button" data-tab-link="reports">查看报表 →</button></div>
+        <div id="weekTrend" class="trend-card"></div>
+        <div class="section-heading compact"><div><p class="eyebrow">BUSINESS CALENDAR</p><h2>经营日历</h2></div></div>
+        <div class="calendar-period-switch" aria-label="日历周期"><button type="button" data-calendar-period="day">日</button><button type="button" data-calendar-period="week">周</button><button type="button" class="active" data-calendar-period="month">月</button><button type="button" data-calendar-period="year">年</button></div>
+        <div class="calendar-card home-calendar-card">
+          <div class="calendar-head"><button id="homeCalendarPrev" aria-label="日历上一个周期">‹</button><b id="homeCalendarTitle"></b><button id="homeCalendarNext" aria-label="日历下一个周期">›</button></div>
+          <div id="calendarWeekdays" class="calendar-weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+          <div class="calendar-legend"><span class="legend-income">＋ 收入</span><span class="legend-expense">− 支出</span><span class="legend-loss">• 额外损耗</span><span>单位：元</span></div>
+        </div>
         <div class="note-card"><span>✦</span><p>按天汇总收入，不用每卖一件就操作。采购和损耗可以单独记录。</p></div>
       </section>
 
@@ -53,7 +64,6 @@
             <label class="field"><span class="pay-label wechat">微信</span><div class="money-input"><i>¥</i><input name="wechat" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" /></div></label>
             <label class="field"><span class="pay-label alipay">支付宝</span><div class="money-input"><i>¥</i><input name="alipay" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" /></div></label>
           </div>
-          <label class="field">其他日常支出（元）<div class="money-input"><i>¥</i><input name="otherExpense" type="number" min="0" step="0.01" inputmode="decimal" placeholder="摊位费、交通费等；采购不要填这里" /></div></label>
           <label class="field">备注（可选）<input name="note" maxlength="100" placeholder="例如：下雨，收摊较早" /></label>
           <button class="primary-button" id="incomeSubmit" type="submit">保存当天收入</button>
           <button class="outline-button hidden cancel-edit" id="cancelIncomeEdit" type="button">取消修改</button>
@@ -65,10 +75,12 @@
         <div id="incomeList" class="list-card"></div>
       </section>
 
-      <section class="view" id="view-purchase">
-        <div class="section-heading"><div><p class="eyebrow">RESTOCK & INVENTORY</p><h2>采购与库存</h2></div></div>
+      <section class="view" id="view-expenses">
+        <div class="section-heading"><div><p class="eyebrow">EXPENSES</p><h2>记录支出</h2></div></div>
+        <p class="inventory-explainer">采购记在下方并自动入库；交通费、摊位费等单独记为其他支出。</p>
+        <div class="section-heading compact"><div><p class="eyebrow">PURCHASE</p><h2>原料采购</h2></div></div>
         <form id="purchaseForm" class="form-card">
-          <p id="purchaseEditNotice" class="form-hint hidden">正在修改采购记录；原料名称和单位可在下方「当前库存」中修改。</p>
+          <p id="purchaseEditNotice" class="form-hint hidden">正在修改采购记录；原料名称和单位可在「库存」页修改。</p>
           <div class="form-row"><label class="field">采购日期<input name="date" type="date" required /></label><label class="field">供应商<input name="supplier" maxlength="60" placeholder="可不填" /></label></div>
           <div class="form-row"><div class="field"><span>原料名称</span><div class="product-select-control"><select name="productId" required><option value="">请选择原料</option></select><button id="addProduct" class="outline-button" type="button">＋ 新增</button></div></div><label class="field unit-field">单位<select name="unit" disabled><option value="">选择原料后显示</option><option>个</option><option>份</option><option>斤</option><option>公斤</option><option>克</option><option>盒</option><option>袋</option><option>包</option><option>瓶</option><option>杯</option><option>串</option><option>件</option><option>箱</option><option>升</option><option>桶</option></select></label></div>
           <div class="form-row"><label class="field">采购数量<input name="qty" type="number" min="0.001" step="0.001" inputmode="decimal" placeholder="0" required /></label><label class="field">单价（元）<input name="unitCost" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required /></label></div>
@@ -78,44 +90,52 @@
           <button class="primary-button" id="purchaseSubmit" type="submit">保存采购并入库</button>
           <button class="outline-button hidden cancel-edit" id="cancelPurchaseEdit" type="button">取消修改</button>
         </form>
-        <div class="section-heading compact"><div><p class="eyebrow">ON HAND</p><h2>当前库存</h2></div><button class="text-button" id="adjustStock">收摊盘点</button></div>
-        <p class="inventory-explainer">新增原料会自动出现在这里；采购使库存增加，收摊盘点会更新实际剩余数量。</p>
-        <div id="inventoryList" class="list-card"></div>
-        <button class="text-button loss-entry" id="addLoss">＋ 记录额外损耗（偶尔使用）</button>
         <div class="section-heading compact"><div><p class="eyebrow">PURCHASE HISTORY</p><h2>采购记录</h2></div></div>
         <div id="purchaseList" class="list-card"></div>
-        <div class="section-heading compact"><div><p class="eyebrow">STOCKTAKE HISTORY</p><h2>盘点记录</h2></div></div>
-        <div id="stocktakeList" class="list-card"></div>
-        <div class="section-heading compact"><div><p class="eyebrow">EXTRA LOSS</p><h2>额外损耗记录</h2></div></div>
+        <div class="section-heading compact"><div><p class="eyebrow">OTHER EXPENSES</p><h2>其他支出</h2></div></div>
+        <form id="expenseForm" class="form-card">
+          <div class="form-row"><label class="field">日期<input name="date" type="date" required /></label><label class="field">分类<select name="category"><option>交通费</option><option>摊位费</option><option>运费</option><option>包装耗材</option><option>燃气电费</option><option>设备用品</option><option>其他支出</option></select></label></div>
+          <div class="form-row"><label class="field">支出项目<input name="item" maxlength="60" placeholder="例如：往返车费" required /></label><label class="field">金额（元）<div class="money-input"><i>¥</i><input name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required /></div></label></div>
+          <label class="field">备注（可选）<input name="note" maxlength="100" /></label>
+          <p class="form-hint">采购相关运费若已填在上方「其他采购支出」，这里不要重复记录。</p>
+          <button class="primary-button" id="expenseSubmit" type="submit">保存支出</button>
+          <button class="outline-button hidden cancel-edit" id="cancelExpenseEdit" type="button">取消修改</button>
+        </form>
+        <div id="expenseList" class="list-card record-list-gap"></div>
+        <div class="section-heading compact"><div><p class="eyebrow">EXTRA LOSS</p><h2>额外损耗</h2></div><button class="text-button loss-entry" id="addLoss">＋ 记录损耗</button></div>
+        <p class="inventory-explainer">这里只记正常使用之外的损耗数量，并扣减库存。原料采购金额已算入支出，损耗不再重复扣款。</p>
         <div id="lossList" class="list-card"></div>
       </section>
 
+      <section class="view" id="view-inventory">
+        <div class="section-heading"><div><p class="eyebrow">INVENTORY</p><h2>库存</h2></div><button class="text-button" id="adjustStock">收摊盘点</button></div>
+        <p class="inventory-explainer">新增原料会自动出现在这里；采购使库存增加，收摊盘点更新实际剩余数量。</p>
+        <div id="inventoryList" class="list-card"></div>
+        <div class="section-heading compact"><div><p class="eyebrow">STOCKTAKE HISTORY</p><h2>盘点记录</h2></div></div>
+        <div id="stocktakeList" class="list-card"></div>
+      </section>
+
       <section class="view" id="view-reports">
-        <div class="section-heading"><div><p class="eyebrow">YOUR BUSINESS AT A GLANCE</p><h2>经营日历</h2></div></div>
+        <div class="section-heading"><div><p class="eyebrow">BUSINESS REPORT</p><h2>经营报表</h2></div></div>
         <div class="period-switch" role="tablist" aria-label="报表周期">
           <button class="period-button" data-period="day">日</button><button class="period-button" data-period="week">周</button><button class="period-button active" data-period="month">月</button><button class="period-button" data-period="year">年</button>
         </div>
-        <div class="calendar-card">
-          <div class="calendar-head"><button id="calendarPrev" aria-label="上一个周期">‹</button><b id="calendarTitle"></b><button id="calendarNext" aria-label="下一个周期">›</button></div>
-          <div class="calendar-weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
-          <div class="calendar-grid" id="calendarGrid"></div>
-          <div class="calendar-legend"><i></i> 当天有收入记录</div>
+        <div class="report-period-head calendar-head"><button id="calendarPrev" aria-label="上一个周期">‹</button><button id="calendarTitle" class="report-date-button" aria-label="选择报表日期"></button><button id="calendarNext" aria-label="下一个周期">›</button></div>
+        <div class="report-overview">
+          <div class="report-overview-title"><span class="report-overview-icon" aria-hidden="true">▥</span><div><small>经营账本</small><h3 id="reportOverviewTitle">收支总览</h3></div></div>
+          <div class="report-summary" id="periodSummary"></div>
         </div>
-        <div class="special-day-card">
-          <div class="special-title"><div><p class="eyebrow">DATE NOTE</p><b id="specialDateTitle">标记特别日期</b></div><button id="deleteSpecialDay" class="delete-record hidden">删除标记</button></div>
-          <form id="specialDayForm">
-            <label class="field">标记日期<input name="date" type="date" required /></label>
-            <div class="form-row"><label class="field">类型<select name="category"><option>学校放假</option><option>学校活动</option><option>节假日</option><option>天气影响</option><option>市集/集会</option><option>其他</option></select></label><label class="field">事件名称<input name="title" maxlength="24" placeholder="例如：校庆活动" required /></label></div>
-            <label class="field">备注（可选）<input name="note" maxlength="100" placeholder="例如：预计人流多，提前备货" /></label>
-            <button class="outline-button" type="submit">保存此日期标记</button>
-          </form>
-        </div>
-        <div class="report-summary" id="periodSummary"></div>
+        <div class="section-heading compact"><div><p class="eyebrow">TREND</p><h2>经营趋势</h2></div></div>
+        <div class="trend-card report-trend-card"><div class="trend-controls"><div class="trend-switch" aria-label="趋势类型"><button type="button" class="active" data-chart-style="bar">柱状图</button><button type="button" data-chart-style="line">折线图</button></div><div class="trend-switch" aria-label="趋势指标"><button type="button" class="active" data-chart-metric="income">收入</button><button type="button" data-chart-metric="expense">支出</button><button type="button" data-chart-metric="net">结余</button></div></div><div id="reportTrend"></div></div>
+        <div class="section-heading compact"><div><p class="eyebrow">BILLS</p><h2 id="breakdownTitle">账单汇总</h2></div></div>
+        <div class="bill-header"><span>日期</span><span>收入</span><span>支出</span><span>结余</span></div>
+        <div id="periodRows" class="list-card bill-list"></div>
         <div id="dailyExpenseBreakdown" class="list-card hidden"></div>
         <div class="section-heading compact"><div><p class="eyebrow">INSIGHTS</p><h2>经营分析</h2></div></div>
         <div id="analysisCards" class="analysis-grid"></div>
-        <div class="section-heading compact"><div><p class="eyebrow">BREAKDOWN</p><h2 id="breakdownTitle">每日明细</h2></div></div>
-        <div id="periodRows" class="list-card"></div>
+        <div id="periodInsights" class="analysis-grid period-insights"></div>
+        <div class="section-heading compact"><div><p class="eyebrow">EXPENSE MIX</p><h2>支出分类</h2></div></div>
+        <div id="expenseCategoryList" class="list-card"></div>
         <div class="section-heading compact"><div><p class="eyebrow">YOUR RECORDS</p><h2>导出与备份</h2></div></div>
         <div class="export-card"><div><b>导出每日账目</b><small>包含每天各渠道收入、采购与其他支出</small></div><button class="outline-button" id="exportDaily">导出 CSV</button></div>
         <div class="export-card"><div><b>导出采购明细</b><small>包含供应商、原料、数量和进价</small></div><button class="outline-button" id="exportPurchases">导出 CSV</button></div>
@@ -159,6 +179,27 @@
       <label class="field">日期<input name="date" type="date" required /></label>
       <button class="primary-button" type="submit">查看这一天</button>
     </form>
+  </dialog>
+  <dialog id="reportDateDialog">
+    <form id="reportDateForm" class="form-card dialog-card">
+      <button class="close-report-date" type="button" aria-label="取消并关闭">×</button>
+      <p class="eyebrow">REPORT DATE</p><h2>选择报表日期</h2>
+      <label class="field">日期<input name="date" type="date" required /></label>
+      <button class="primary-button" type="submit">查看这个周期</button>
+    </form>
+  </dialog>
+  <dialog id="specialDayDialog" class="special-day-dialog">
+    <div class="special-day-card">
+      <button class="close-special-date" type="button" aria-label="取消并关闭">×</button>
+      <div class="special-title"><div><p class="eyebrow">DATE NOTE</p><b id="specialDateTitle">标记特别日期</b></div><button id="deleteSpecialDay" class="delete-record hidden" type="button">删除标记</button></div>
+      <p id="specialDaySummary" class="special-day-summary"></p>
+      <form id="specialDayForm">
+        <label class="field">标记日期<input name="date" type="date" required /></label>
+        <div class="form-row"><label class="field">类型<select name="category"><option>学校放假</option><option>学校活动</option><option>节假日</option><option>天气影响</option><option>市集/集会</option><option>其他</option></select></label><label class="field">事件名称<input name="title" maxlength="24" placeholder="例如：校庆活动" required /></label></div>
+        <label class="field">备注（可选）<input name="note" maxlength="100" placeholder="例如：预计人流多，提前备货" /></label>
+        <button class="primary-button" type="submit">保存日期标记</button>
+      </form>
+    </div>
   </dialog>
   <dialog id="productDialog">
     <form id="productForm" class="form-card dialog-card">
