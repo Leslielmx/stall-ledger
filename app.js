@@ -133,7 +133,7 @@ function recalculateInventory(productId){
   const events=[...db.purchases.filter(p=>p.id===productId).map(p=>({date:p.date,time:p.createdAt||`${p.date}T00:00:00`,type:0,qty:num(p.qty)})),...db.losses.filter(a=>a.id===productId).map(a=>({date:a.date,time:a.createdAt||`${a.date}T12:00:00`,type:1,qty:num(a.qty)})),...db.adjustments.filter(a=>a.id===productId).map(a=>({date:a.date,time:a.createdAt||`${a.date}T23:59:59`,type:2,source:a,actual:a.actual,qty:num(a.qty)}))].sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time)||a.type-b.type);
   let qty=0;events.forEach(e=>{if(e.type===0)qty+=e.qty;else if(e.type===1)qty-=e.qty;else if(e.actual==null)qty+=e.qty;else{e.source.qty=Math.round((num(e.actual)-qty)*1000)/1000;qty=num(e.actual);}});product.qty=Math.round(qty*1000)/1000;
 }
-function activateTab(name){ $$('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name)); $$('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${name}`)); window.scrollTo({top:0,behavior:'smooth'}); }
+function activateTab(name){ $('.app-shell').classList.toggle('show-home',name==='overview');$$('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name)); $$('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${name}`)); window.scrollTo({top:0,behavior:'smooth'}); }
 $$('.tab').forEach(t=>t.addEventListener('click',()=>activateTab(t.dataset.tab)));
 $$('[data-open]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.open==='income'){$('#incomeForm [name=date]').value=dashboardDate;loadIncomeDate();}activateTab(b.dataset.open);}));
 $$('[data-tab-link]').forEach(b=>b.addEventListener('click',()=>activateTab(b.dataset.tabLink)));
