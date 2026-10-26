@@ -34,6 +34,14 @@
       </nav>
 
       <section class="view active" id="view-overview">
+        <div class="section-heading home-calendar-heading"><div><p class="eyebrow">BUSINESS CALENDAR</p><h2>经营日历</h2></div></div>
+        <div class="calendar-period-switch" aria-label="日历周期"><button type="button" data-calendar-period="day">日</button><button type="button" data-calendar-period="week">周</button><button type="button" class="active" data-calendar-period="month">月</button><button type="button" data-calendar-period="year">年</button></div>
+        <div class="calendar-card home-calendar-card">
+          <div class="calendar-head"><button id="homeCalendarPrev" aria-label="日历上一个周期">‹</button><b id="homeCalendarTitle"></b><button id="homeCalendarNext" aria-label="日历下一个周期">›</button></div>
+          <div id="calendarWeekdays" class="calendar-weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+          <div class="calendar-legend"><span class="legend-income">＋ 收入</span><span class="legend-expense">− 支出</span><span class="legend-loss">• 额外损耗</span><span>单位：元</span></div>
+        </div>
         <div class="section-heading"><div><p class="eyebrow">快捷操作</p><h2>今天记一笔</h2></div><span class="soft-tag">收摊后约 1 分钟</span></div>
         <div class="quick-grid">
           <button class="quick-card income-quick" data-open="income" aria-label="记录所选日期的收入，按现金微信支付宝汇总"><span class="quick-icon" aria-hidden="true">＋</span><b>记收入</b><small>按渠道汇总</small></button>
@@ -44,14 +52,6 @@
         <div id="stockAlerts" class="list-card"></div>
         <div class="section-heading compact"><div><p class="eyebrow">LAST 7 DAYS</p><h2>近一周经营变化</h2></div><button class="text-button" data-tab-link="reports">查看报表 →</button></div>
         <div id="weekTrend" class="trend-card"></div>
-        <div class="section-heading compact"><div><p class="eyebrow">BUSINESS CALENDAR</p><h2>经营日历</h2></div></div>
-        <div class="calendar-period-switch" aria-label="日历周期"><button type="button" data-calendar-period="day">日</button><button type="button" data-calendar-period="week">周</button><button type="button" class="active" data-calendar-period="month">月</button><button type="button" data-calendar-period="year">年</button></div>
-        <div class="calendar-card home-calendar-card">
-          <div class="calendar-head"><button id="homeCalendarPrev" aria-label="日历上一个周期">‹</button><b id="homeCalendarTitle"></b><button id="homeCalendarNext" aria-label="日历下一个周期">›</button></div>
-          <div id="calendarWeekdays" class="calendar-weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
-          <div class="calendar-grid" id="calendarGrid"></div>
-          <div class="calendar-legend"><span class="legend-income">＋ 收入</span><span class="legend-expense">− 支出</span><span class="legend-loss">• 额外损耗</span><span>单位：元</span></div>
-        </div>
         <div class="note-card"><span>✦</span><p>按天汇总收入，不用每卖一件就操作。采购和损耗可以单独记录。</p></div>
       </section>
 
