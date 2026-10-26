@@ -40,6 +40,11 @@
 .expenses-page-heading h2{font-size:22px!important;color:#28573d;font-weight:800}
 #view-expenses>.section-heading.compact h2{font-size:15px;color:#3e5042}
 #view-expenses>.section-heading.compact .eyebrow{font-size:8px}
+#view-overview .text-button[data-tab-link]{display:inline-flex;align-items:center;justify-content:center;min-height:30px;padding:6px 11px;border:1px solid #c9dfce;border-radius:999px;background:#e9f4eb;color:#28623e;font-size:11px;font-weight:750;box-shadow:0 2px 5px #45634a18}
+#view-overview .text-button[data-tab-link]:focus-visible{outline:2px solid #3d8055;outline-offset:2px}
+.money-input input{padding-left:35px!important}
+.money-input i{left:12px!important;top:50%!important;transform:translateY(-50%);line-height:1;pointer-events:none}
+.close-expense-category{position:absolute;right:12px;top:10px;border:0;background:none;font-size:25px;color:#888;cursor:pointer}
 @media(max-width:600px){
   .app-shell{max-width:520px;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
   .topbar{padding-top:4px}
@@ -86,5 +91,24 @@
   .show-home .home-calendar-card .calendar-amounts small{font-size:7px;line-height:8px}
   .show-home .calendar-weekdays span{font-size:8px;padding:2px 0 3px}
   .show-home .calendar-legend{font-size:8px;margin-top:4px}
+}
+.calendar-day{gap:0!important}
+.home-calendar-card .calendar-day{height:59px}
+.calendar-event-slot{display:flex;align-items:center;justify-content:center;width:100%;height:12px;min-height:12px;padding:0 1px}
+.calendar-event{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid var(--special-stroke,#dd91b5);border-radius:4px;background:var(--special-panel,#fcebf2);color:#5e4960;font-style:normal;font-size:7px;font-weight:750;line-height:10px;padding:0 2px}
+.calendar-day .calendar-amounts{min-height:20px;gap:0}
+.calendar-day .calendar-amounts small{line-height:8px}
+@media(max-width:600px){.show-home .home-calendar-card .calendar-day{height:56px}.show-home .home-calendar-card .calendar-amounts{min-height:20px}.show-home .home-calendar-card .calendar-amounts small{line-height:9px;font-size:8px}}
+.calendar-event{font-size:8px;line-height:11px}
+.row-title{font-size:13px}.row-sub{font-size:10px;line-height:1.45}
+.field{font-size:12px}.field input,.field select{font-size:14px}.form-hint,.inventory-explainer{font-size:10px}
+@media(max-width:600px){
+  .show-home .brand h1{font-size:19px}
+  .show-home #view-overview>.section-heading:first-child h2,.show-home .home-calendar-heading h2{font-size:18px}
+  .show-home .quick-card b{font-size:14px}
+  .show-home .quick-card small{font-size:8px}
+  .show-home .quick-icon{width:31px;height:31px;font-size:21px}
+  .home-calendar-card .calendar-day b{font-size:11px}
+  .tab{font-size:11px}
 }
 
