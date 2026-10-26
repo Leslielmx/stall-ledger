@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f5f3ed" />
+  <title>摆摊小账本</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="reports.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M5 13h22l-2-7H7l-2 7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M7 14v12h18V14M12 26v-8h8v8M4 13c0 2 2 3 4 3s3-1 4-3c0 2 2 3 4 3s4-1 4-3c0 2 2 3 4 3s4-1 4-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><p class="eyebrow">每日经营记录</p><h1>摆摊小账本</h1></div></div>
+      <button class="date-chip" id="todayLabel" aria-label="选择日期"></button>
+    </header>
+
+    <main>
+      <section class="hero-card">
+        <div class="hero-head"><div><span class="muted-light">当日经营结余</span><h2 id="netToday">¥0.00</h2></div><div class="bear-art" aria-hidden="true"><span class="bear-ear ear-left"></span><span class="bear-ear ear-right"></span><span class="bear-face"><span class="bear-eye eye-left"></span><span class="bear-eye eye-right"></span><span class="bear-nose"></span><span class="bear-cheek cheek-left"></span><span class="bear-cheek cheek-right"></span></span></div></div>
+        <div class="hero-stats">
+          <button id="openIncomeSummary" type="button"><span>当日收入 ›</span><strong id="incomeToday">¥0.00</strong></button>
+          <button id="openExpenseSummary" type="button"><span>当日支出 ›</span><strong id="expenseToday">¥0.00</strong></button>
+          <button id="openInventorySummary" type="button"><span>当前库存品类 ›</span><strong id="stockKinds">0</strong></button>
+        </div>
+      </section>
+
+      <nav class="tabs" aria-label="功能导航">
+        <button class="tab active" data-tab="overview"><span class="tab-icon" aria-hidden="true">⌂</span><span>首页</span></button>
+        <button class="tab" data-tab="income"><span class="tab-icon" aria-hidden="true">¥</span><span>收入</span></button>
+        <button class="tab" data-tab="purchase"><span class="tab-icon" aria-hidden="true">▣</span><span>采购库存</span></button>
+        <button class="tab" data-tab="reports"><span class="tab-icon" aria-hidden="true">▥</span><span>报表</span></button>
+      </nav>
+
+      <section class="view active" id="view-overview">
+        <div class="section-heading"><div><p class="eyebrow">快捷操作</p><h2>今天记一笔</h2></div><span class="soft-tag">收摊后约 1 分钟</span></div>
+        <div class="quick-grid">
+          <button class="quick-card income-quick" data-open="income" aria-label="记录所选日期的收入，按现金微信支付宝汇总"><span class="quick-icon" aria-hidden="true">＋</span><b>记收入</b><small>按渠道汇总</small></button>
+          <button class="quick-card purchase-quick" data-open="purchase" aria-label="记录原料采购并入库"><span class="quick-icon" aria-hidden="true">▣</span><b>记采购</b><small>原料入库</small></button>
+          <button class="quick-card stocktake-quick" id="quickStocktake" aria-label="收摊盘点并更新原料实际剩余"><span class="quick-icon" aria-hidden="true">✓</span><b>收摊盘点</b><small>更新剩余</small></button>
+        </div>
+        <div class="section-heading compact"><div><p class="eyebrow">STOCK WATCH</p><h2>库存提醒</h2></div><button class="text-button" data-tab-link="purchase">管理库存 →</button></div>
+        <div id="stockAlerts" class="list-card"></div>
+        <div class="note-card"><span>✦</span><p>按天汇总收入，不用每卖一件就操作。采购和损耗可以单独记录。</p></div>
+      </section>
+
+      <section class="view" id="view-income">
+        <div class="section-heading"><div><p class="eyebrow">DAILY TOTAL</p><h2>记录每日收入</h2></div></div>
+        <form id="incomeForm" class="form-card">
+          <label class="field">日期<input name="date" type="date" required /></label>
+          <div class="amount-fields">
+            <label class="field"><span class="pay-label cash">现金</span><div class="money-input"><i>¥</i><input name="cash" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" /></div></label>
+            <label class="field"><span class="pay-label wechat">微信</span><div class="money-input"><i>¥</i><input name="wechat" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" /></div></label>
+            <label class="field"><span class="pay-label alipay">支付宝</span><div class="money-input"><i>¥</i><input name="alipay" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" /></div></label>
+          </div>
+          <label class="field">其他日常支出（元）<div class="money-input"><i>¥</i><input name="otherExpense" type="number" min="0" step="0.01" inputmode="decimal" placeholder="摊位费、交通费等；采购不要填这里" /></div></label>
+          <label class="field">备注（可选）<input name="note" maxlength="100" placeholder="例如：下雨，收摊较早" /></label>
+          <button class="primary-button" id="incomeSubmit" type="submit">保存当天收入</button>
+          <button class="outline-button hidden cancel-edit" id="cancelIncomeEdit" type="button">取消修改</button>
+          <p class="form-hint">同一天再次保存会更新当天汇总。</p>
+        </form>
+        <div class="section-heading compact"><div><p class="eyebrow">THIS MONTH</p><h2>本月渠道汇总</h2></div></div>
+        <div class="channel-summary" id="channelSummary"></div>
+        <div class="section-heading compact"><div><p class="eyebrow">DAILY HISTORY</p><h2>每日收入记录</h2></div></div>
+        <div id="incomeList" class="list-card"></div>
+      </section>
+
+      <section class="view" id="view-purchase">
+        <div class="section-heading"><div><p class="eyebrow">RESTOCK & INVENTORY</p><h2>采购与库存</h2></div></div>
+        <form id="purchaseForm" class="form-card">
+          <p id="purchaseEditNotice" class="form-hint hidden">正在修改采购记录；原料名称和单位可在下方「当前库存」中修改。</p>
+          <div class="form-row"><label class="field">采购日期<input name="date" type="date" required /></label><label class="field">供应商<input name="supplier" maxlength="60" placeholder="可不填" /></label></div>
+          <div class="form-row"><div class="field"><span>原料名称</span><div class="product-select-control"><select name="productId" required><option value="">请选择原料</option></select><button id="addProduct" class="outline-button" type="button">＋ 新增</button></div></div><label class="field unit-field">单位<select name="unit" disabled><option value="">选择原料后显示</option><option>个</option><option>份</option><option>斤</option><option>公斤</option><option>克</option><option>盒</option><option>袋</option><option>包</option><option>瓶</option><option>杯</option><option>串</option><option>件</option><option>箱</option><option>升</option><option>桶</option></select></label></div>
+          <div class="form-row"><label class="field">采购数量<input name="qty" type="number" min="0.001" step="0.001" inputmode="decimal" placeholder="0" required /></label><label class="field">单价（元）<input name="unitCost" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required /></label></div>
+          <div class="form-row"><label class="field">补货提醒值<div class="threshold-control"><input name="threshold" type="number" min="0" step="0.001" inputmode="decimal" placeholder="例如：10" /><span id="purchaseThresholdUnit">单位</span></div></label><label class="field">其他采购支出（元）<input name="extraCost" type="number" min="0" step="0.01" inputmode="decimal" placeholder="运费等，可不填" /></label></div>
+          <p class="form-hint">补货提醒值固定保留，当前库存低于或等于它时提醒；需要时可修改。</p>
+          <label class="field">备注（可选）<input name="note" maxlength="100" placeholder="批次或采购说明" /></label>
+          <button class="primary-button" id="purchaseSubmit" type="submit">保存采购并入库</button>
+          <button class="outline-button hidden cancel-edit" id="cancelPurchaseEdit" type="button">取消修改</button>
+        </form>
+        <div class="section-heading compact"><div><p class="eyebrow">ON HAND</p><h2>当前库存</h2></div><button class="text-button" id="adjustStock">收摊盘点</button></div>
+        <p class="inventory-explainer">新增原料会自动出现在这里；采购使库存增加，收摊盘点会更新实际剩余数量。</p>
+        <div id="inventoryList" class="list-card"></div>
+        <button class="text-button loss-entry" id="addLoss">＋ 记录额外损耗（偶尔使用）</button>
+        <div class="section-heading compact"><div><p class="eyebrow">PURCHASE HISTORY</p><h2>采购记录</h2></div></div>
+        <div id="purchaseList" class="list-card"></div>
+        <div class="section-heading compact"><div><p class="eyebrow">STOCKTAKE HISTORY</p><h2>盘点记录</h2></div></div>
+        <div id="stocktakeList" class="list-card"></div>
+        <div class="section-heading compact"><div><p class="eyebrow">EXTRA LOSS</p><h2>额外损耗记录</h2></div></div>
+        <div id="lossList" class="list-card"></div>
+      </section>
+
+      <section class="view" id="view-reports">
+        <div class="section-heading"><div><p class="eyebrow">YOUR BUSINESS AT A GLANCE</p><h2>经营日历</h2></div></div>
+        <div class="period-switch" role="tablist" aria-label="报表周期">
+          <button class="period-button" data-period="day">日</button><button class="period-button" data-period="week">周</button><button class="period-button active" data-period="month">月</button><button class="period-button" data-period="year">年</button>
+        </div>
+        <div class="calendar-card">
+          <div class="calendar-head"><button id="calendarPrev" aria-label="上一个周期">‹</button><b id="calendarTitle"></b><button id="calendarNext" aria-label="下一个周期">›</button></div>
+          <div class="calendar-weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+          <div class="calendar-legend"><i></i> 当天有收入记录</div>
+        </div>
+        <div class="special-day-card">
+          <div class="special-title"><div><p class="eyebrow">DATE NOTE</p><b id="specialDateTitle">标记特别日期</b></div><button id="deleteSpecialDay" class="delete-record hidden">删除标记</button></div>
+          <form id="specialDayForm">
+            <label class="field">标记日期<input name="date" type="date" required /></label>
+            <div class="form-row"><label class="field">类型<select name="category"><option>学校放假</option><option>学校活动</option><option>节假日</option><option>天气影响</option><option>市集/集会</option><option>其他</option></select></label><label class="field">事件名称<input name="title" maxlength="24" placeholder="例如：校庆活动" required /></label></div>
+            <label class="field">备注（可选）<input name="note" maxlength="100" placeholder="例如：预计人流多，提前备货" /></label>
+            <button class="outline-button" type="submit">保存此日期标记</button>
+          </form>
+        </div>
+        <div class="report-summary" id="periodSummary"></div>
+        <div id="dailyExpenseBreakdown" class="list-card hidden"></div>
+        <div class="section-heading compact"><div><p class="eyebrow">INSIGHTS</p><h2>经营分析</h2></div></div>
+        <div id="analysisCards" class="analysis-grid"></div>
+        <div class="section-heading compact"><div><p class="eyebrow">BREAKDOWN</p><h2 id="breakdownTitle">每日明细</h2></div></div>
+        <div id="periodRows" class="list-card"></div>
+        <div class="section-heading compact"><div><p class="eyebrow">YOUR RECORDS</p><h2>导出与备份</h2></div></div>
+        <div class="export-card"><div><b>导出每日账目</b><small>包含每天各渠道收入、采购与其他支出</small></div><button class="outline-button" id="exportDaily">导出 CSV</button></div>
+        <div class="export-card"><div><b>导出采购明细</b><small>包含供应商、原料、数量和进价</small></div><button class="outline-button" id="exportPurchases">导出 CSV</button></div>
+        <div class="export-card"><div><b>完整账本备份</b><small>换设备时先导出，再在新设备导入</small></div><button class="outline-button" id="exportBackup">导出备份</button></div>
+        <div class="export-card"><div><b>导入完整账本</b><small>选择之前导出的 JSON 备份文件</small></div><button class="outline-button" id="importBackup">选择文件</button><input id="backupFile" type="file" accept="application/json,.json" hidden /></div>
+        <div class="section-heading compact"><div><p class="eyebrow">RECENT ACTIVITY</p><h2>最近记录</h2></div></div>
+        <div id="recentList" class="list-card"></div>
+        <p class="privacy-note">数据目前保存在此设备的浏览器中。请定期导出备份；清除浏览器数据或更换设备可能导致记录丢失。</p>
+      </section>
+    </main>
+    <footer><span>慢慢记，账就清楚了</span><span>本机保存 · 离线可用</span></footer>
+  </div>
+  <dialog id="adjustDialog">
+    <form method="dialog" id="adjustForm" class="form-card dialog-card">
+      <button class="close-button" type="button" aria-label="取消并关闭">×</button>
+      <p class="eyebrow">STOCKTAKE</p><h2>收摊盘点</h2>
+      <div class="field"><span>原料</span><div class="product-select-control"><select name="product" required></select><button id="addProductFromStocktake" class="outline-button" type="button">＋ 新增原料</button></div></div>
+      <label class="field">实际剩余数量<input name="qty" type="number" min="0" step="0.001" inputmode="decimal" placeholder="盘点后填实际剩余数量" required /></label>
+      <label class="field">备注（可选）<input name="note" maxlength="100" placeholder="例如：今日损耗较多" /></label>
+      <p class="form-hint">保存后会用实盘数量更新库存。盘点差异不计为额外损耗。</p>
+      <button class="primary-button" value="default" type="submit">保存盘点</button>
+    </form>
+  </dialog>
+  <dialog id="lossDialog">
+    <form id="lossForm" class="form-card dialog-card">
+      <button class="close-loss" type="button" aria-label="取消并关闭">×</button>
+      <p class="eyebrow">EXTRA LOSS</p><h2>记录额外损耗</h2>
+      <label class="field">日期<input name="date" type="date" required /></label>
+      <label class="field">原料<select name="product" required></select></label>
+      <label class="field">损耗数量<div class="threshold-control"><input name="qty" type="number" min="0.001" step="0.001" inputmode="decimal" required /><span id="lossUnit">单位</span></div></label>
+      <label class="field">原因<select name="reason"><option>做坏/做错</option><option>破损</option><option>变质</option><option>丢失</option><option>其他</option></select></label>
+      <label class="field">备注（可选）<input name="note" maxlength="100" placeholder="简单写一下发生了什么" /></label>
+      <p class="form-hint">只记录正常使用之外的损耗；保存后扣除库存。</p>
+      <button class="primary-button" type="submit">保存额外损耗</button>
+    </form>
+  </dialog>
+  <dialog id="dateDialog">
+    <form id="dateForm" class="form-card dialog-card">
+      <button class="close-date" type="button" aria-label="取消并关闭">×</button>
+      <p class="eyebrow">CHOOSE A DAY</p><h2>查看哪一天？</h2>
+      <label class="field">日期<input name="date" type="date" required /></label>
+      <button class="primary-button" type="submit">查看这一天</button>
+    </form>
+  </dialog>
+  <dialog id="productDialog">
+    <form id="productForm" class="form-card dialog-card">
+      <button class="close-product" type="button" aria-label="取消并关闭">×</button>
+      <p class="eyebrow">INGREDIENT SETTINGS</p><h2>修改原料信息</h2>
+      <label class="field">原料名称<input name="name" maxlength="60" required /></label>
+      <label class="field">单位<select name="unit" required><option>个</option><option>份</option><option>斤</option><option>公斤</option><option>克</option><option>盒</option><option>袋</option><option>包</option><option>瓶</option><option>杯</option><option>串</option><option>件</option><option>箱</option><option>升</option><option>桶</option></select></label>
+      <label class="field">补货提醒值<div class="threshold-control"><input name="threshold" type="number" min="0" step="0.001" inputmode="decimal" placeholder="可不填" /><span id="productThresholdUnit">单位</span></div></label>
+      <button class="primary-button" type="submit">保存原料信息</button>
+      <button id="deleteProduct" class="delete-record cancel-edit" type="button">删除这个原料</button>
+    </form>
+  </dialog>
+  <dialog id="newProductDialog">
+    <form id="newProductForm" class="form-card dialog-card">
+      <button class="close-new-product" type="button" aria-label="取消并关闭">×</button>
+      <p class="eyebrow">INGREDIENT CATALOG</p><h2>新增原料</h2>
+      <p class="form-hint">常见原料建议，点选后还可以修改：</p>
+      <div class="ingredient-suggestions"><button type="button" data-suggest-name="鸡蛋" data-suggest-unit="个">鸡蛋</button><button type="button" data-suggest-name="面粉" data-suggest-unit="斤">面粉</button><button type="button" data-suggest-name="肉馅" data-suggest-unit="斤">肉馅</button><button type="button" data-suggest-name="食用油" data-suggest-unit="升">食用油</button><button type="button" data-suggest-name="香葱" data-suggest-unit="斤">香葱</button><button type="button" data-suggest-name="酵母" data-suggest-unit="克">酵母</button><button type="button" data-suggest-name="食盐" data-suggest-unit="袋">食盐</button><button type="button" data-suggest-name="酱料" data-suggest-unit="瓶">酱料</button></div>
+      <label class="field">原料名称<input name="name" maxlength="60" placeholder="例如：鸡蛋、面粉" required /></label>
+      <label class="field">单位<select name="unit" required><option value="">请选择单位</option><option>个</option><option>份</option><option>斤</option><option>公斤</option><option>克</option><option>盒</option><option>袋</option><option>包</option><option>瓶</option><option>杯</option><option>串</option><option>件</option><option>箱</option><option>升</option><option>桶</option></select></label>
+      <label class="field">补货提醒值<div class="threshold-control"><input name="threshold" type="number" min="0" step="0.001" inputmode="decimal" placeholder="可不填" /><span id="newProductThresholdUnit">单位</span></div></label>
+      <p class="form-hint">当前库存低于或等于这个固定数量时提醒补货。</p>
+      <button class="primary-button" type="submit">保存到原料列表</button>
+    </form>
+  </dialog>
+  <div id="toast" role="status" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
+
