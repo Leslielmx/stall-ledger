@@ -76,13 +76,14 @@
       </section>
 
       <section class="view" id="view-expenses">
-        <div class="section-heading"><div><p class="eyebrow">EXPENSES</p><h2>记录支出</h2></div></div>
+        <div class="section-heading expenses-page-heading"><div><p class="eyebrow">EXPENSES</p><h2>记录支出</h2></div></div>
         <p class="inventory-explainer">采购记在下方并自动入库；交通费、摊位费等单独记为其他支出。</p>
         <div class="section-heading compact"><div><p class="eyebrow">PURCHASE</p><h2>原料采购</h2></div></div>
         <form id="purchaseForm" class="form-card">
-          <p id="purchaseEditNotice" class="form-hint hidden">正在修改采购记录；原料名称和单位可在「库存」页修改。</p>
+          <p id="purchaseEditNotice" class="form-hint hidden">正在修改采购记录；本次采购单位也可以直接修改。</p>
           <div class="form-row"><label class="field">采购日期<input name="date" type="date" required /></label><label class="field">供应商<input name="supplier" maxlength="60" placeholder="可不填" /></label></div>
-          <div class="form-row"><div class="field"><span>原料名称</span><div class="product-select-control"><select name="productId" required><option value="">请选择原料</option></select><button id="addProduct" class="outline-button" type="button">＋ 新增</button></div></div><label class="field unit-field">单位<select name="unit" disabled><option value="">选择原料后显示</option><option>个</option><option>份</option><option>斤</option><option>公斤</option><option>克</option><option>盒</option><option>袋</option><option>包</option><option>瓶</option><option>杯</option><option>串</option><option>件</option><option>箱</option><option>升</option><option>桶</option></select></label></div>
+          <div class="form-row"><div class="field"><span>原料名称</span><div class="product-select-control"><select name="productId" required><option value="">请选择原料</option></select><button id="addProduct" class="outline-button" type="button">＋ 新增</button></div></div><label class="field unit-field">本次采购单位<select name="unit" required><option value="">先选原料</option></select></label></div>
+          <p id="purchaseConversionHint" class="unit-conversion-hint">选择原料后，可按适用单位记录采购。</p>
           <div class="form-row"><label class="field">采购数量<input name="qty" type="number" min="0.001" step="0.001" inputmode="decimal" placeholder="0" required /></label><label class="field">单价（元）<input name="unitCost" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" required /></label></div>
           <div class="form-row"><label class="field">补货提醒值<div class="threshold-control"><input name="threshold" type="number" min="0" step="0.001" inputmode="decimal" placeholder="例如：10" /><span id="purchaseThresholdUnit">单位</span></div></label><label class="field">其他采购支出（元）<input name="extraCost" type="number" min="0" step="0.01" inputmode="decimal" placeholder="运费等，可不填" /></label></div>
           <p class="form-hint">补货提醒值固定保留，当前库存低于或等于它时提醒；需要时可修改。</p>
@@ -153,7 +154,8 @@
       <button class="close-button" type="button" aria-label="取消并关闭">×</button>
       <p class="eyebrow">STOCKTAKE</p><h2>收摊盘点</h2>
       <div class="field"><span>原料</span><div class="product-select-control"><select name="product" required></select><button id="addProductFromStocktake" class="outline-button" type="button">＋ 新增原料</button></div></div>
-      <label class="field">实际剩余数量<input name="qty" type="number" min="0" step="0.001" inputmode="decimal" placeholder="盘点后填实际剩余数量" required /></label>
+      <div class="form-row"><label class="field">实际剩余数量<input name="qty" type="number" min="0" step="0.001" inputmode="decimal" placeholder="盘点后填实际剩余数量" required /></label><label class="field unit-field">盘点单位<select name="unit" required></select></label></div>
+      <p id="stocktakeEquivalent" class="unit-conversion-hint">选择原料并填写数量后显示库存换算。</p>
       <label class="field">备注（可选）<input name="note" maxlength="100" placeholder="例如：今日损耗较多" /></label>
       <p class="form-hint">保存后会用实盘数量更新库存。盘点差异不计为额外损耗。</p>
       <button class="primary-button" value="default" type="submit">保存盘点</button>
@@ -206,7 +208,7 @@
       <button class="close-product" type="button" aria-label="取消并关闭">×</button>
       <p class="eyebrow">INGREDIENT SETTINGS</p><h2>修改原料信息</h2>
       <label class="field">原料名称<input name="name" maxlength="60" required /></label>
-      <label class="field">单位<select name="unit" required><option>个</option><option>份</option><option>斤</option><option>公斤</option><option>克</option><option>盒</option><option>袋</option><option>包</option><option>瓶</option><option>杯</option><option>串</option><option>件</option><option>箱</option><option>升</option><option>桶</option></select></label>
+      <label class="field">库存统一单位<select name="unit" required><option value="kg">kg（公斤，2 斤）</option><option value="g">g（克）</option><option>个</option><option>份</option><option>盒</option><option>袋</option><option>包</option><option>瓶</option><option>杯</option><option>串</option><option>件</option><option>箱</option><option value="L">L（升）</option><option value="mL">mL（毫升）</option><option>桶</option></select></label>
       <label class="field">补货提醒值<div class="threshold-control"><input name="threshold" type="number" min="0" step="0.001" inputmode="decimal" placeholder="可不填" /><span id="productThresholdUnit">单位</span></div></label>
       <button class="primary-button" type="submit">保存原料信息</button>
       <button id="deleteProduct" class="delete-record cancel-edit" type="button">删除这个原料</button>
@@ -217,9 +219,9 @@
       <button class="close-new-product" type="button" aria-label="取消并关闭">×</button>
       <p class="eyebrow">INGREDIENT CATALOG</p><h2>新增原料</h2>
       <p class="form-hint">常见原料建议，点选后还可以修改：</p>
-      <div class="ingredient-suggestions"><button type="button" data-suggest-name="鸡蛋" data-suggest-unit="个">鸡蛋</button><button type="button" data-suggest-name="面粉" data-suggest-unit="斤">面粉</button><button type="button" data-suggest-name="肉馅" data-suggest-unit="斤">肉馅</button><button type="button" data-suggest-name="食用油" data-suggest-unit="升">食用油</button><button type="button" data-suggest-name="香葱" data-suggest-unit="斤">香葱</button><button type="button" data-suggest-name="酵母" data-suggest-unit="克">酵母</button><button type="button" data-suggest-name="食盐" data-suggest-unit="袋">食盐</button><button type="button" data-suggest-name="酱料" data-suggest-unit="瓶">酱料</button></div>
+      <div class="ingredient-suggestions"><button type="button" data-suggest-name="鸡蛋" data-suggest-unit="个">鸡蛋</button><button type="button" data-suggest-name="面粉" data-suggest-unit="kg">面粉</button><button type="button" data-suggest-name="肉馅" data-suggest-unit="kg">肉馅</button><button type="button" data-suggest-name="食用油" data-suggest-unit="L">食用油</button><button type="button" data-suggest-name="香葱" data-suggest-unit="g">香葱</button><button type="button" data-suggest-name="酵母" data-suggest-unit="g">酵母</button><button type="button" data-suggest-name="食盐" data-suggest-unit="袋">食盐</button><button type="button" data-suggest-name="酱料" data-suggest-unit="瓶">酱料</button></div>
       <label class="field">原料名称<input name="name" maxlength="60" placeholder="例如：鸡蛋、面粉" required /></label>
-      <label class="field">单位<select name="unit" required><option value="">请选择单位</option><option>个</option><option>份</option><option>斤</option><option>公斤</option><option>克</option><option>盒</option><option>袋</option><option>包</option><option>瓶</option><option>杯</option><option>串</option><option>件</option><option>箱</option><option>升</option><option>桶</option></select></label>
+      <label class="field">库存统一单位<select name="unit" required><option value="">请选择单位</option><option value="kg">kg（公斤，2 斤）</option><option value="g">g（克）</option><option>个</option><option>份</option><option>盒</option><option>袋</option><option>包</option><option>瓶</option><option>杯</option><option>串</option><option>件</option><option>箱</option><option value="L">L（升）</option><option value="mL">mL（毫升）</option><option>桶</option></select></label>
       <label class="field">补货提醒值<div class="threshold-control"><input name="threshold" type="number" min="0" step="0.001" inputmode="decimal" placeholder="可不填" /><span id="newProductThresholdUnit">单位</span></div></label>
       <p class="form-hint">当前库存低于或等于这个固定数量时提醒补货。</p>
       <button class="primary-button" type="submit">保存到原料列表</button>
