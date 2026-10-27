@@ -190,4 +190,16 @@ body{background:#fbfaff}
 .home-calendar-card .calendar-day b{width:30px;height:30px}
 .calendar-day.has-record:not(.selected):not(.special-day) b{background:#d8efdf;color:#286144;box-shadow:0 0 0 2px #d8efdf}
 @media(max-width:600px){.show-home .home-calendar-card .calendar-day b{width:30px;height:30px}}
+/* Keep the brown bear's ears mirrored around the center of its head. */
+.bear-art .bear-ear{width:19px;height:19px;top:3px}
+.bear-art .bear-ear.ear-left{left:calc(50% - 22px);right:auto}
+.bear-art .bear-ear.ear-right{right:calc(50% - 22px);left:auto}
+.expense-bear-art .bear-ear.ear-left{left:4px;right:auto}
+.expense-bear-art .bear-ear.ear-right{right:4px;left:auto}
+/* Empty event labels take no space; amounts occupy the event label position. */
+.calendar-day:not(.special-day) .calendar-event-slot{display:none}
+.calendar-day:not(.special-day) .calendar-amounts{margin-top:2px}
+#view-overview .home-calendar-card .calendar-day b{width:min(36px,90%);height:auto;aspect-ratio:1}
+.calendar-day.has-record:not(.selected):not(.special-day) b{background:#c4eacb;box-shadow:0 0 0 2px #c4eacb}
+.show-home .home-calendar-card .calendar-day.special-day{height:70px}
 
