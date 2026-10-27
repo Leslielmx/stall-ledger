@@ -184,7 +184,10 @@ body{background:#fbfaff}
 #view-overview .text-button[data-tab-link],#view-inventory #adjustStock{background:linear-gradient(180deg,#fffefa,#eaf8f3);border-color:#cadbd4;color:#3e6b59;box-shadow:0 2px 0 #d2e1da,0 4px 8px #527e6c1a}
 .special-day-dialog .special-day-card{background:linear-gradient(135deg,var(--special-panel,#fff0f6),#fffefc)}
 .bear-art .bear-face{left:calc((100% - 47px)/2)}
-.calendar-day:not(.special-day) .calendar-event-slot{height:0;min-height:0;padding:0;overflow:hidden}
+.calendar-day:not(.special-day) .calendar-event-slot{height:5px;min-height:5px;padding:0;overflow:hidden}
 .calendar-day:not(.special-day) .calendar-amounts{min-height:0;gap:0}
 .calendar-day:not(.special-day) .calendar-amounts small{line-height:8px}
+.home-calendar-card .calendar-day b{width:30px;height:30px}
+.calendar-day.has-record:not(.selected):not(.special-day) b{background:#d8efdf;color:#286144;box-shadow:0 0 0 2px #d8efdf}
+@media(max-width:600px){.show-home .home-calendar-card .calendar-day b{width:30px;height:30px}}
 
